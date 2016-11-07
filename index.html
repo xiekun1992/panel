@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		ul{
+			float: left;
+		}
+		.container{
+			position: relative;
+		}
+		/*xpanel*/
+		.xpanel{
+			position: relative;
+		}
+		.xpanel .xpanel-background,
+		.xpanel .xpanel-front{
+			border: 1px solid #ccc;
+			box-shadow: 0 1px 4px #ddd;
+			box-sizing: border-box;
+		}
+		.xpanel .xpanel-background{
+			position: absolute;top: 0;left: 0;z-index: -1;
+		}
+		.xpanel-menu{
+			cursor:pointer;box-shadow: 0 1px 4px #ccc;position: fixed;top: 0;left: 0;z-index: 999999;background-color: #fff;border: 1px solid #ddd;display: none;
+		}
+		.xpanel-menu.show{
+			display: block;
+		}
+		.xpanel-menu>ul{
+			padding: 0;list-style: none;margin: 0;
+		}
+		.xpanel-menu>ul>li{
+			font-family: 'Microsoft yahei';
+			color: #555;
+			font-size: 14px;
+			padding:4px 40px;
+			-moz-user-select:none;
+			-webkit-user-select:none;
+			-o-user-select:none;
+			-ms-user-select:none;
+			user-select:none;
+		}
+		.xpanel-menu>ul>li:hover{
+			background: #777;
+    	color: #fff;
+		}
+		.xpanel-menu>ul>li.disabled{
+    	color: #aaa;
+		}
+		.xpanel-menu>ul>li.disabled:hover{
+			background: #eee;
+		}
+		.xpanel-saveimage-bg{
+	    position: fixed;
+	    top: 0;
+	    left: 0;
+	    right: 0;
+	    bottom: 0;
+	    background: rgba(0,0,0,0.5);
+	    text-align: center;
+		}
+		.xpanel-saveimage-mention{
+			background: #fff;
+	    display: inline-block;
+	    padding: 2px 5px;
+	    border-radius: 4px;
+	    font-size: 12px;
+	    box-shadow: 0 0 5px #000;
+	    margin: 10px 0;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div id="panel"></div>
+		<ul id="entities">
+			<li draggable="true">公司1</li>
+			<li draggable="true">公司2</li>
+			<li draggable="true">公司3</li>
+		</ul>
+	</div>
+	<script>exports={};</script>
+	<script src="./dist/bundle.js"></script>
+	<script>
+		let lis = Array.from(document.querySelectorAll("#entities>li"));
+		lis.forEach((o, i)=>{
+			o.addEventListener('dragstart', (e)=>{
+				e.dataTransfer.setData('data',JSON.stringify({text:e.target.innerHTML, properties: {
+					'节点属性1': 'one',
+					'节点属性2': 'two',
+					'节点属性3': 'three',
+				}}));
+			});
+		});
+	</script>
+</body>
+</html>
