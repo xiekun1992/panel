@@ -41,46 +41,60 @@ export default class Panel {
 		this.initEvents();
 		this.initBackground();
 	}
+	findActiveShape(mouseX, mouseY, callback) {
+		let lastActivedShape = this.activedShape;
+		for(var i=this.shapes.length-1;i>=0;i--){
+			// 将鼠标位置转为相对画布的位置并判断落点
+			if(this.shapes[i].isPointInPath(mouseX-this.offset.left, mouseY-this.offset.top)){
+				this.activedShape = this.shapes[i];
+				callback && callback(this.activedShape);
+				break;
+			}
+		}
+		if(i < 0){
+			this.activedShape = null;
+		}
+		// 新选中了别的图形
+		if(lastActivedShape && this.activedShape !== lastActivedShape){
+			lastActivedShape.setBorderColor();
+			this.repaint();
+		}
+	}
 	initEvents() {
 		// 绑定画布的事件
 		this.frontCanvas.oncontextmenu = (e)=>{
 			e.preventDefault();
 			let startX = e.pageX, startY = e.pageY;
-			for(var i=this.shapes.length-1;i>=0;i--){
-				// 将鼠标位置转为相对画布的位置并判断落点
-				if(this.shapes[i].isPointInPath(startX-this.offset.left, startY-this.offset.top)){
-					this.activedShape = this.shapes[i];
-					break;
-				}
-			}
-			if(i < 0){
-				this.activedShape = null;
-			}
+			this.findActiveShape(startX, startY);
 			this.menu.show({startX: startX, startY: startY});
 			e.stopPropagation();
 		};
 		this.frontCanvas.addEventListener('mousedown', (e)=>{
 			let startX = e.pageX, startY = e.pageY;
-			// console.log(startX,startY)
 			this.menu.hide();
 				// 由于层级覆盖，先检查上层的图形
 			if(e.button === 0){
-				for(var i=this.shapes.length-1;i>=0;i--){
-					if(this.shapes[i].isPointInPath(startX-this.offset.left, startY-this.offset.top)){
-						this.activedShape = this.shapes[i];
+				this.findActiveShape(startX, startY, (activedShape)=>{
+					if(activedShape){
 						let onmousemove = (e)=>{
-							this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
+							activedShape.setPosition(e.pageX-startX, e.pageY-startY);
 							this.repaint();
 						};
 						this.frontCanvas.addEventListener('mousemove', onmousemove);
 
 						this.frontCanvas.addEventListener('mouseup', (e)=>{
 							this.frontCanvas.removeEventListener('mousemove', onmousemove);
-							this.activedShape && this.activedShape.drop();
+							activedShape && activedShape.drop();
+
+							let startX = e.pageX, startY = e.pageY;
+							this.findActiveShape(startX, startY, (activedShape)=>{
+								activedShape.clear();
+								activedShape.setBorderColor('#f00');
+								this.repaint();
+							});
 						});
-						break;
 					}
-				}
+				});
 			}
 		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
@@ -194,21 +208,3 @@ export default class Panel {
 		return image;
 	}
 }
-// 观察者模式
-// class EventHandler {
-// 	constructor() {
-// 		this.events = {};
-// 	}
-// 	publish(eventName, ...data) {
-// 		for(var e of this.events[eventName]){
-// 			e.apply(null, data);
-// 		}
-// 	}
-// 	subscribe({eventName, callback}) {
-// 		!this.events[eventName] && (this.events[eventName] = []);
-// 		this.events[eventName].push(callback);
-// 		return this;
-// 	}
-// }
-
-// const eventHandler = new EventHandler();

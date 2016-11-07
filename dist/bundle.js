@@ -137,6 +137,27 @@
 		}
 
 		_createClass(Panel, [{
+			key: 'findActiveShape',
+			value: function findActiveShape(mouseX, mouseY, callback) {
+				var lastActivedShape = this.activedShape;
+				for (var i = this.shapes.length - 1; i >= 0; i--) {
+					// 将鼠标位置转为相对画布的位置并判断落点
+					if (this.shapes[i].isPointInPath(mouseX - this.offset.left, mouseY - this.offset.top)) {
+						this.activedShape = this.shapes[i];
+						callback && callback(this.activedShape);
+						break;
+					}
+				}
+				if (i < 0) {
+					this.activedShape = null;
+				}
+				// 新选中了别的图形
+				if (lastActivedShape && this.activedShape !== lastActivedShape) {
+					lastActivedShape.setBorderColor();
+					this.repaint();
+				}
+			}
+		}, {
 			key: 'initEvents',
 			value: function initEvents() {
 				var _this = this;
@@ -146,46 +167,40 @@
 					e.preventDefault();
 					var startX = e.pageX,
 					    startY = e.pageY;
-					for (var i = _this.shapes.length - 1; i >= 0; i--) {
-						// 将鼠标位置转为相对画布的位置并判断落点
-						if (_this.shapes[i].isPointInPath(startX - _this.offset.left, startY - _this.offset.top)) {
-							_this.activedShape = _this.shapes[i];
-							break;
-						}
-					}
-					if (i < 0) {
-						_this.activedShape = null;
-					}
+					_this.findActiveShape(startX, startY);
 					_this.menu.show({ startX: startX, startY: startY });
 					e.stopPropagation();
 				};
 				this.frontCanvas.addEventListener('mousedown', function (e) {
 					var startX = e.pageX,
 					    startY = e.pageY;
-					// console.log(startX,startY)
 					_this.menu.hide();
 					// 由于层级覆盖，先检查上层的图形
 					if (e.button === 0) {
-						for (var i = _this.shapes.length - 1; i >= 0; i--) {
-							if (_this.shapes[i].isPointInPath(startX - _this.offset.left, startY - _this.offset.top)) {
-								var _ret = function () {
-									_this.activedShape = _this.shapes[i];
+						_this.findActiveShape(startX, startY, function (activedShape) {
+							if (activedShape) {
+								(function () {
 									var onmousemove = function onmousemove(e) {
-										_this.activedShape.setPosition(e.pageX - startX, e.pageY - startY);
+										activedShape.setPosition(e.pageX - startX, e.pageY - startY);
 										_this.repaint();
 									};
 									_this.frontCanvas.addEventListener('mousemove', onmousemove);
 
 									_this.frontCanvas.addEventListener('mouseup', function (e) {
 										_this.frontCanvas.removeEventListener('mousemove', onmousemove);
-										_this.activedShape && _this.activedShape.drop();
-									});
-									return 'break';
-								}();
+										activedShape && activedShape.drop();
 
-								if (_ret === 'break') break;
+										var startX = e.pageX,
+										    startY = e.pageY;
+										_this.findActiveShape(startX, startY, function (activedShape) {
+											activedShape.clear();
+											activedShape.setBorderColor('#f00');
+											_this.repaint();
+										});
+									});
+								})();
 							}
-						}
+						});
 					}
 				});
 				this.frontCanvas.addEventListener('drop', function (e) {
@@ -406,25 +421,6 @@
 
 		return Panel;
 	}();
-	// 观察者模式
-	// class EventHandler {
-	// 	constructor() {
-	// 		this.events = {};
-	// 	}
-	// 	publish(eventName, ...data) {
-	// 		for(var e of this.events[eventName]){
-	// 			e.apply(null, data);
-	// 		}
-	// 	}
-	// 	subscribe({eventName, callback}) {
-	// 		!this.events[eventName] && (this.events[eventName] = []);
-	// 		this.events[eventName].push(callback);
-	// 		return this;
-	// 	}
-	// }
-
-	// const eventHandler = new EventHandler();
-
 
 	exports.default = Panel;
 
@@ -450,22 +446,35 @@
 		function Shape() {
 			var color = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '#000';
 			var backgroundColor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '#fff';
+			var borderColor = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '#000';
 
 			_classCallCheck(this, Shape);
 
 			this.color = color;
 			this.backgroundColor = backgroundColor;
+			this.borderColor = borderColor;
 		}
 
 		_createClass(Shape, [{
 			key: 'setColor',
-			value: function setColor(color) {
+			value: function setColor() {
+				var color = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '#000';
+
 				this.color = color;
 			}
 		}, {
 			key: 'setBackgroundColor',
-			value: function setBackgroundColor(color) {
+			value: function setBackgroundColor() {
+				var color = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '#fff';
+
 				this.backgroundColor = color;
+			}
+		}, {
+			key: 'setBorderColor',
+			value: function setBorderColor() {
+				var color = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '#000';
+
+				this.borderColor = color;
 			}
 		}]);
 
@@ -522,26 +531,33 @@
 				this.position.originY = this.position.y;
 			}
 		}, {
+			key: 'clear',
+			value: function clear() {
+				this.ctx.clearRect(this.position.x - 1, this.position.y - 1, this.width + 2, this.height + 2);
+			}
+		}, {
 			key: 'draw',
 			value: function draw() {
 				var ctx = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.ctx;
 
 				ctx.beginPath();
 				ctx.fillStyle = this.backgroundColor;
-				ctx.strokeStyle = this.color;
 				ctx.textAlign = 'center';
 				ctx.font = this.font.toString();
 				ctx.textBaseline = 'middle';
-				ctx.shadowBlur = 10;
-				ctx.shadowColor = '#bbb';
+				// ctx.shadowBlur=2;
+				// ctx.shadowColor=this.borderColor || '#bbb';
 				ctx.lineWidth = 1;
 
-				ctx.rect(this.position.x, this.position.y, this.width, this.height);
-				ctx.fill();
-				ctx.stroke();
+				ctx.strokeStyle = this.color;
+				ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+				// ctx.fill();
+				// ctx.stroke();
+				ctx.strokeStyle = this.borderColor;
+				ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+				ctx.shadowBlur = 0;
 				ctx.fillStyle = this.color;
 				ctx.fillText(this.text, this.position.x + this.width / 2, this.position.y + this.height / 2);
-				ctx.shadowBlur = 0;
 				ctx.closePath();
 			}
 		}, {
