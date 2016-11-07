@@ -1,11 +1,5 @@
 import Panel from './Panel';
 
-let exportData = (panel)=>{
-	console.log(arguments)
-	console.log(panel.exportMetaData());
-};
-
-
 new Panel({
 	container: '#panel',
 	width: 800,
