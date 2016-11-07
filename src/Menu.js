@@ -1,8 +1,7 @@
 export default class Menu {
 	constructor(panel, option = []) {
 		//type 可应用的元素, 0：全局, 1：图形, 2：画布
-		//0：只在画布中存在图形时可用；1、2：activeShape为空时自动禁用
-		console.log(option)
+		//0：始终可用，1、2：activeShape为空时自动禁用
 		this.options = [
 			{text: '复制', cb: this.copyShape, type: 1},
 			{text: '粘贴', cb: this.pasteShape, type: 2},
@@ -11,7 +10,6 @@ export default class Menu {
 			{text: '保存为图片', cb: this.saveAsImage, type: 0},
 			...option
 		];
-		console.log(this.options)
 
 		this.panel = panel;
 	  this.element = document.createElement('div');
@@ -55,9 +53,9 @@ export default class Menu {
 			}else{
 				this.disable(e, 1, 2);
 			}
-			if(!hasShape){
-				this.toggleGlobalOperation(e);
-			}
+			// if(!hasShape){
+			// 	this.toggleGlobalOperation(e);
+			// }
 		}
 		this.element.classList.add('show');
 	}
@@ -68,13 +66,14 @@ export default class Menu {
 		if(this.panel.activedShape){
 			if(actionType !== 2){// 只执行除画布操作外的动作
 				action.call(this, this.panel, this.panel.activedShape);
+				this.hide();
 			}
 		}else{
-			if(actionType === 0 && this.panel.hasShape()){// 只执行全局操作的动作
+			if(actionType === 0){// 只执行全局操作的动作
 				action.call(this, this.panel);
+				this.hide();
 			}
 		}
-		this.hide();
 	}
 	deleteShape(panel, activedShape) {
 		panel.deleteShape(activedShape);

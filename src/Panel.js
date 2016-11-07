@@ -169,14 +169,12 @@ export default class Panel {
 		for(let s of this.shapes){
 			metaData.push(s.exportMetaData());
 		}
-		console.log(metaData)
 		return metaData;
 	}
-	importCanvasData(context = this.frontCtx, metaData) {
+	importCanvasData(metaData) {
 		for(var d of metaData){
-			let rect = new Rectangle(d);
-			rect.setContext(context);
-			rect.draw();
+			let rect = new Rectangle(d.x, d.y, d.width, d.height, d.data, this.frontCtx);
+			this.shapes.push(rect);
 		}
 	}
 	saveAsImage() {

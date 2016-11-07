@@ -46,18 +46,11 @@
 
 	'use strict';
 
-	var _arguments = arguments;
-
 	var _Panel = __webpack_require__(1);
 
 	var _Panel2 = _interopRequireDefault(_Panel);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var exportData = function exportData(panel) {
-		console.log(_arguments);
-		console.log(panel.exportMetaData());
-	};
 
 	new _Panel2.default({
 		container: '#panel',
@@ -65,7 +58,10 @@
 		height: 400,
 		menuOption: [{ text: '导出元数据', cb: function cb(panel) {
 				console.log(panel.exportCanavsData());
-			}, type: 0 }, { text: '导入元数据', cb: function cb(panel) {}, type: 0 }]
+			}, type: 0 }, { text: '导入元数据', cb: function cb(panel) {
+				var data = { height: 40, width: 80, x: 262, y: 144, data: { text: '导入元数据' } };
+				panel.importCanvasData([data]);
+			}, type: 0 }]
 	});
 
 /***/ },
@@ -336,14 +332,11 @@
 					}
 				}
 
-				console.log(metaData);
 				return metaData;
 			}
 		}, {
 			key: 'importCanvasData',
-			value: function importCanvasData() {
-				var context = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.frontCtx;
-				var metaData = arguments[1];
+			value: function importCanvasData(metaData) {
 				var _iteratorNormalCompletion3 = true;
 				var _didIteratorError3 = false;
 				var _iteratorError3 = undefined;
@@ -352,9 +345,8 @@
 					for (var _iterator3 = metaData[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 						var d = _step3.value;
 
-						var rect = new _Shape.Rectangle(d);
-						rect.setContext(context);
-						rect.draw();
+						var rect = new _Shape.Rectangle(d.x, d.y, d.width, d.height, d.data, this.frontCtx);
+						this.shapes.push(rect);
 					}
 				} catch (err) {
 					_didIteratorError3 = true;
@@ -591,6 +583,8 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Menu = function () {
@@ -600,18 +594,27 @@
 			_classCallCheck(this, Menu);
 
 			//type 可应用的元素, 0：全局, 1：图形, 2：画布
-			//0：只在画布中存在图形时可用；1、2：activeShape为空时自动禁用
-			console.log(option);
-			this.options = [{ text: '复制', cb: this.copyShape, type: 1 }, { text: '粘贴', cb: this.pasteShape, type: 2 }, { text: '剪切', cb: this.cuteShape, type: 1 }, { text: '删除', cb: this.deleteShape, type: 1 }, { text: '保存为图片', cb: this.saveAsImage, type: 0 }];
+			//0：始终可用，1、2：activeShape为空时自动禁用
+			this.options = [{ text: '复制', cb: this.copyShape, type: 1 }, { text: '粘贴', cb: this.pasteShape, type: 2 }, { text: '剪切', cb: this.cuteShape, type: 1 }, { text: '删除', cb: this.deleteShape, type: 1 }, { text: '保存为图片', cb: this.saveAsImage, type: 0 }].concat(_toConsumableArray(option));
+
+			this.panel = panel;
+			this.element = document.createElement('div');
+			this.element.classList.add('xpanel-menu');
+			var ul = document.createElement('ul'),
+			    frag = document.createDocumentFragment();
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
 
 			try {
-				for (var _iterator = option[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var o = _step.value;
+				for (var _iterator = this.options[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var e = _step.value;
 
-					this.options.push(o);
+					var li = document.createElement('li');
+					li.innerHTML = e.text;
+					li.addEventListener('click', this.actionWrapper.bind(this, e.type, e.cb));
+					li.setAttribute('data-menutype', e.type);
+					ul.appendChild(li);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -624,42 +627,6 @@
 				} finally {
 					if (_didIteratorError) {
 						throw _iteratorError;
-					}
-				}
-			}
-
-			console.log(this.options);
-
-			this.panel = panel;
-			this.element = document.createElement('div');
-			this.element.classList.add('xpanel-menu');
-			var ul = document.createElement('ul'),
-			    frag = document.createDocumentFragment();
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = this.options[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var e = _step2.value;
-
-					var li = document.createElement('li');
-					li.innerHTML = e.text;
-					li.addEventListener('click', this.actionWrapper.bind(this, e.type, e.cb));
-					li.setAttribute('data-menutype', e.type);
-					ul.appendChild(li);
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
 					}
 				}
 			}
@@ -703,34 +670,34 @@
 				var onShape = this.panel.activedShape ? true : false,
 				    hasShape = this.panel.hasShape();
 
-				var _iteratorNormalCompletion3 = true;
-				var _didIteratorError3 = false;
-				var _iteratorError3 = undefined;
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
 
 				try {
-					for (var _iterator3 = this.element.children[0].children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-						var e = _step3.value;
+					for (var _iterator2 = this.element.children[0].children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var e = _step2.value;
 
 						if (onShape) {
 							this.disable(e, 2);
 						} else {
 							this.disable(e, 1, 2);
 						}
-						if (!hasShape) {
-							this.toggleGlobalOperation(e);
-						}
+						// if(!hasShape){
+						// 	this.toggleGlobalOperation(e);
+						// }
 					}
 				} catch (err) {
-					_didIteratorError3 = true;
-					_iteratorError3 = err;
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion3 && _iterator3.return) {
-							_iterator3.return();
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
 						}
 					} finally {
-						if (_didIteratorError3) {
-							throw _iteratorError3;
+						if (_didIteratorError2) {
+							throw _iteratorError2;
 						}
 					}
 				}
@@ -749,14 +716,15 @@
 					if (actionType !== 2) {
 						// 只执行除画布操作外的动作
 						action.call(this, this.panel, this.panel.activedShape);
+						this.hide();
 					}
 				} else {
-					if (actionType === 0 && this.panel.hasShape()) {
+					if (actionType === 0) {
 						// 只执行全局操作的动作
 						action.call(this, this.panel);
+						this.hide();
 					}
 				}
-				this.hide();
 			}
 		}, {
 			key: 'deleteShape',

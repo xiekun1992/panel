@@ -9,7 +9,8 @@ new Panel({
 			console.log(panel.exportCanavsData());
 		}, type: 0},
 		{text: '导入元数据', cb: (panel)=>{
-
+			let data = {height:40,width:80,x:262,y:144,data:{text: '导入元数据'}};
+			panel.importCanvasData([data]);
 		}, type: 0}
 	]
 });
