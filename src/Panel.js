@@ -43,21 +43,32 @@ export default class Panel {
 	}
 	findActiveShape(mouseX, mouseY, callback) {
 		let lastActivedShape = this.activedShape;
-		for(var i=this.shapes.length-1;i>=0;i--){
-			// 将鼠标位置转为相对画布的位置并判断落点
-			if(this.shapes[i].isPointInPath(mouseX-this.offset.left, mouseY-this.offset.top)){
-				this.activedShape = this.shapes[i];
-				callback && callback(this.activedShape);
-				break;
+		// 检查上次选中的图形中是否选择连线结点
+		if(lastActivedShape){
+			// console.log(mouseX-this.offset.left, mouseY-this.offset.top);
+			var dot = lastActivedShape.isPointInDots(mouseX-this.offset.left, mouseY-this.offset.top);
+		}
+		// console.log(dot)
+		if(dot){
+			callback && callback(this.activedShape, dot);
+		}else{
+			// 检查画布的图形上是否有落点
+			for(var i=this.shapes.length-1;i>=0;i--){
+				// 将鼠标位置转为相对画布的位置并判断落点
+				if(this.shapes[i].isPointInPath(mouseX-this.offset.left, mouseY-this.offset.top)){
+					this.activedShape = this.shapes[i];
+					callback && callback(this.activedShape);
+					break;
+				}
 			}
-		}
-		if(i < 0){
-			this.activedShape = null;
-		}
-		// 新选中了别的图形
-		if(lastActivedShape && this.activedShape !== lastActivedShape){
-			lastActivedShape.setBorderColor();
-			this.repaint();
+			if(i < 0){
+				this.activedShape = null;
+			}
+			// 新选中了别的图形
+			if(lastActivedShape && this.activedShape !== lastActivedShape){
+				lastActivedShape.setBorderColor();
+				this.repaint();
+			}
 		}
 	}
 	initEvents() {
@@ -69,37 +80,41 @@ export default class Panel {
 			this.menu.show({startX: startX, startY: startY});
 			e.stopPropagation();
 		};
+		var onmousemove;
 		this.frontCanvas.addEventListener('mousedown', (e)=>{
 			let startX = e.pageX, startY = e.pageY;
 			this.menu.hide();
 				// 由于层级覆盖，先检查上层的图形
 			if(e.button === 0){
-				this.findActiveShape(startX, startY, (activedShape)=>{
+				this.findActiveShape(startX, startY, (activedShape, activedDot)=>{
+					// console.log(activedShape, activedDot)
+					onmousemove = (e)=>{
+						this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
+						this.repaint();
+					};
 					if(activedShape){
-						let onmousemove = (e)=>{
-							activedShape.setPosition(e.pageX-startX, e.pageY-startY);
-							this.repaint();
-						};
 						this.frontCanvas.addEventListener('mousemove', onmousemove);
-
-						this.frontCanvas.addEventListener('mouseup', (e)=>{
-							this.frontCanvas.removeEventListener('mousemove', onmousemove);
-							activedShape && activedShape.drop();
-
-							let startX = e.pageX, startY = e.pageY;
-							this.findActiveShape(startX, startY, (activedShape)=>{
-								activedShape.clear();
-								activedShape.setBorderColor('#f00');
-								this.repaint();
-							});
-						});
+					}else if(activedDot){
+						this.frontCanvas.style.cursor='crosshair';
 					}
 				});
 			}
 		});
+		this.frontCanvas.addEventListener('mouseup', (e)=>{
+			this.frontCanvas.removeEventListener('mousemove', onmousemove);
+			this.activedShape && this.activedShape.drop();
+
+			let startX = e.pageX, startY = e.pageY;
+			this.findActiveShape(startX, startY, (activedShape)=>{
+				if(activedShape){
+					activedShape.setBorderColor('#f00');
+					this.repaint();
+					activedShape.drawDots();
+				}
+			});
+		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
 			e.preventDefault();
-			console.log(e.pageX,e.pageY)
 			let rect = this.addShape({
 				mouseX: e.pageX-this.offset.left,
 				mouseY: e.pageY-this.offset.top,
@@ -163,20 +178,17 @@ export default class Panel {
 		}
 	}
 	addShape({mouseX, mouseY, width, height, data, ctx}) {
-		return new Rectangle(
-				mouseX,
-				mouseY,
+		return new Rectangle({
+				x: mouseX,
+				y: mouseY,
 				width, 
 				height, 
 				data,
-				ctx
-			);
+				canvasContext: ctx
+			});
 	}
 	hasShape() {
 		return this.shapes.length > 0?true:false;
-	}
-	extractShapes() {
-
 	}
 	exportCanavsData() {
 		let metaData = [];
@@ -187,7 +199,8 @@ export default class Panel {
 	}
 	importCanvasData(metaData) {
 		for(var d of metaData){
-			let rect = new Rectangle(d.x, d.y, d.width, d.height, d.data, this.frontCtx);
+			d['canvasContext'] = this.frontCtx;
+			let rect = new Rectangle(d);
 			this.shapes.push(rect);
 		}
 	}

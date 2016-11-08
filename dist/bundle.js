@@ -140,21 +140,32 @@
 			key: 'findActiveShape',
 			value: function findActiveShape(mouseX, mouseY, callback) {
 				var lastActivedShape = this.activedShape;
-				for (var i = this.shapes.length - 1; i >= 0; i--) {
-					// 将鼠标位置转为相对画布的位置并判断落点
-					if (this.shapes[i].isPointInPath(mouseX - this.offset.left, mouseY - this.offset.top)) {
-						this.activedShape = this.shapes[i];
-						callback && callback(this.activedShape);
-						break;
+				// 检查上次选中的图形中是否选择连线结点
+				if (lastActivedShape) {
+					// console.log(mouseX-this.offset.left, mouseY-this.offset.top);
+					var dot = lastActivedShape.isPointInDots(mouseX - this.offset.left, mouseY - this.offset.top);
+				}
+				// console.log(dot)
+				if (dot) {
+					callback && callback(this.activedShape, dot);
+				} else {
+					// 检查画布的图形上是否有落点
+					for (var i = this.shapes.length - 1; i >= 0; i--) {
+						// 将鼠标位置转为相对画布的位置并判断落点
+						if (this.shapes[i].isPointInPath(mouseX - this.offset.left, mouseY - this.offset.top)) {
+							this.activedShape = this.shapes[i];
+							callback && callback(this.activedShape);
+							break;
+						}
 					}
-				}
-				if (i < 0) {
-					this.activedShape = null;
-				}
-				// 新选中了别的图形
-				if (lastActivedShape && this.activedShape !== lastActivedShape) {
-					lastActivedShape.setBorderColor();
-					this.repaint();
+					if (i < 0) {
+						this.activedShape = null;
+					}
+					// 新选中了别的图形
+					if (lastActivedShape && this.activedShape !== lastActivedShape) {
+						lastActivedShape.setBorderColor();
+						this.repaint();
+					}
 				}
 			}
 		}, {
@@ -171,41 +182,43 @@
 					_this.menu.show({ startX: startX, startY: startY });
 					e.stopPropagation();
 				};
+				var onmousemove;
 				this.frontCanvas.addEventListener('mousedown', function (e) {
 					var startX = e.pageX,
 					    startY = e.pageY;
 					_this.menu.hide();
 					// 由于层级覆盖，先检查上层的图形
 					if (e.button === 0) {
-						_this.findActiveShape(startX, startY, function (activedShape) {
+						_this.findActiveShape(startX, startY, function (activedShape, activedDot) {
+							// console.log(activedShape, activedDot)
+							onmousemove = function onmousemove(e) {
+								_this.activedShape.setPosition(e.pageX - startX, e.pageY - startY);
+								_this.repaint();
+							};
 							if (activedShape) {
-								(function () {
-									var onmousemove = function onmousemove(e) {
-										activedShape.setPosition(e.pageX - startX, e.pageY - startY);
-										_this.repaint();
-									};
-									_this.frontCanvas.addEventListener('mousemove', onmousemove);
-
-									_this.frontCanvas.addEventListener('mouseup', function (e) {
-										_this.frontCanvas.removeEventListener('mousemove', onmousemove);
-										activedShape && activedShape.drop();
-
-										var startX = e.pageX,
-										    startY = e.pageY;
-										_this.findActiveShape(startX, startY, function (activedShape) {
-											activedShape.clear();
-											activedShape.setBorderColor('#f00');
-											_this.repaint();
-										});
-									});
-								})();
+								_this.frontCanvas.addEventListener('mousemove', onmousemove);
+							} else if (activedDot) {
+								_this.frontCanvas.style.cursor = 'crosshair';
 							}
 						});
 					}
 				});
+				this.frontCanvas.addEventListener('mouseup', function (e) {
+					_this.frontCanvas.removeEventListener('mousemove', onmousemove);
+					_this.activedShape && _this.activedShape.drop();
+
+					var startX = e.pageX,
+					    startY = e.pageY;
+					_this.findActiveShape(startX, startY, function (activedShape) {
+						if (activedShape) {
+							activedShape.setBorderColor('#f00');
+							_this.repaint();
+							activedShape.drawDots();
+						}
+					});
+				});
 				this.frontCanvas.addEventListener('drop', function (e) {
 					e.preventDefault();
-					console.log(e.pageX, e.pageY);
 					var rect = _this.addShape({
 						mouseX: e.pageX - _this.offset.left,
 						mouseY: e.pageY - _this.offset.top,
@@ -308,16 +321,20 @@
 				    data = _ref2.data,
 				    ctx = _ref2.ctx;
 
-				return new _Shape.Rectangle(mouseX, mouseY, width, height, data, ctx);
+				return new _Shape.Rectangle({
+					x: mouseX,
+					y: mouseY,
+					width: width,
+					height: height,
+					data: data,
+					canvasContext: ctx
+				});
 			}
 		}, {
 			key: 'hasShape',
 			value: function hasShape() {
 				return this.shapes.length > 0 ? true : false;
 			}
-		}, {
-			key: 'extractShapes',
-			value: function extractShapes() {}
 		}, {
 			key: 'exportCanavsData',
 			value: function exportCanavsData() {
@@ -360,7 +377,8 @@
 					for (var _iterator3 = metaData[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 						var d = _step3.value;
 
-						var rect = new _Shape.Rectangle(d.x, d.y, d.width, d.height, d.data, this.frontCtx);
+						d['canvasContext'] = this.frontCtx;
+						var rect = new _Shape.Rectangle(d);
 						this.shapes.push(rect);
 					}
 				} catch (err) {
@@ -443,10 +461,13 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Shape = function () {
-		function Shape() {
-			var color = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '#000';
-			var backgroundColor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '#fff';
-			var borderColor = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '#000';
+		function Shape(_ref) {
+			var _ref$color = _ref.color,
+			    color = _ref$color === undefined ? '#000' : _ref$color,
+			    _ref$backgroundColor = _ref.backgroundColor,
+			    backgroundColor = _ref$backgroundColor === undefined ? '#fff' : _ref$backgroundColor,
+			    _ref$borderColor = _ref.borderColor,
+			    borderColor = _ref$borderColor === undefined ? '#000' : _ref$borderColor;
 
 			_classCallCheck(this, Shape);
 
@@ -476,6 +497,13 @@
 
 				this.borderColor = color;
 			}
+		}, {
+			key: 'isPointInPath',
+			value: function isPointInPath(x, y) {
+				// x, y 为相对画布的位置
+				// console.log(this.position.x, this.position.y, this.width, this.height)
+				return this.position.x <= x && x <= this.position.x + this.width && this.position.y <= y && y <= this.position.y + this.height ? true : false;
+			}
 		}]);
 
 		return Shape;
@@ -484,17 +512,24 @@
 	var Rectangle = exports.Rectangle = function (_Shape) {
 		_inherits(Rectangle, _Shape);
 
-		function Rectangle() {
-			var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 10;
-			var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 10;
-			var width = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 80;
-			var height = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 40;
-			var data = arguments[4];
-			var canvasContext = arguments[5];
+		function Rectangle(_ref2) {
+			var _ref2$x = _ref2.x,
+			    x = _ref2$x === undefined ? 10 : _ref2$x,
+			    _ref2$y = _ref2.y,
+			    y = _ref2$y === undefined ? 10 : _ref2$y,
+			    _ref2$width = _ref2.width,
+			    width = _ref2$width === undefined ? 80 : _ref2$width,
+			    _ref2$height = _ref2.height,
+			    height = _ref2$height === undefined ? 40 : _ref2$height,
+			    data = _ref2.data,
+			    canvasContext = _ref2.canvasContext,
+			    color = _ref2.color,
+			    backgroundColor = _ref2.backgroundColor,
+			    borderColor = _ref2.borderColor;
 
 			_classCallCheck(this, Rectangle);
 
-			var _this = _possibleConstructorReturn(this, (Rectangle.__proto__ || Object.getPrototypeOf(Rectangle)).call(this));
+			var _this = _possibleConstructorReturn(this, (Rectangle.__proto__ || Object.getPrototypeOf(Rectangle)).call(this, { color: color, backgroundColor: backgroundColor, borderColor: borderColor }));
 
 			_this.width = width;
 			_this.height = height;
@@ -508,7 +543,8 @@
 					return this.size + 'px "' + this.family + '"';
 				}
 			};
-			_this.ctx = canvasContext;
+			// this.ctx = canvasContext;
+			_this.setContext(canvasContext);
 			_this.draw();
 			return _this;
 		}
@@ -517,6 +553,11 @@
 			key: 'setContext',
 			value: function setContext(ctx) {
 				this.ctx = ctx;
+				this.dots = [new Dot({ x: this.position.x + this.width / 2, y: this.position.y, canvasContext: this.ctx, borderColor: '#f00' }), // 上
+				new Dot({ x: this.position.x, y: this.position.y + this.height / 2, canvasContext: this.ctx, borderColor: '#f00' }), // 右
+				new Dot({ x: this.position.x + this.width / 2, y: this.position.y + this.height, canvasContext: this.ctx, borderColor: '#f00' }), // 下
+				new Dot({ x: this.position.x + this.width, y: this.position.y + this.height / 2, canvasContext: this.ctx, borderColor: '#f00' }) // 左
+				];
 			}
 		}, {
 			key: 'setPosition',
@@ -561,9 +602,44 @@
 				ctx.closePath();
 			}
 		}, {
-			key: 'isPointInPath',
-			value: function isPointInPath(x, y) {
-				return this.position.x < x && x < this.position.x + this.width && this.position.y < y && y < this.position.y + this.height;
+			key: 'drawDots',
+			value: function drawDots() {
+				this.dots[0].draw({ x: this.position.x + this.width / 2, y: this.position.y });
+				this.dots[1].draw({ x: this.position.x, y: this.position.y + this.height / 2 });
+				this.dots[2].draw({ x: this.position.x + this.width / 2, y: this.position.y + this.height });
+				this.dots[3].draw({ x: this.position.x + this.width, y: this.position.y + this.height / 2 });
+			}
+		}, {
+			key: 'isPointInDots',
+			value: function isPointInDots(x, y) {
+				// x, y 为相对画布的位置
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = this.dots[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var d = _step.value;
+
+						console.log(d.isPointInPath(x, y));
+						if (d.isPointInPath(x, y)) {
+							return d;
+						}
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
 			}
 		}, {
 			key: 'exportMetaData',
@@ -575,8 +651,54 @@
 		return Rectangle;
 	}(Shape);
 
-	var Line = function (_Shape2) {
-		_inherits(Line, _Shape2);
+	var Dot = function (_Shape2) {
+		_inherits(Dot, _Shape2);
+
+		function Dot(_ref3) {
+			var x = _ref3.x,
+			    y = _ref3.y,
+			    _ref3$width = _ref3.width,
+			    width = _ref3$width === undefined ? 6 : _ref3$width,
+			    _ref3$height = _ref3.height,
+			    height = _ref3$height === undefined ? 6 : _ref3$height,
+			    canvasContext = _ref3.canvasContext,
+			    color = _ref3.color,
+			    backgroundColor = _ref3.backgroundColor,
+			    borderColor = _ref3.borderColor;
+
+			_classCallCheck(this, Dot);
+
+			var _this2 = _possibleConstructorReturn(this, (Dot.__proto__ || Object.getPrototypeOf(Dot)).call(this, { color: color, backgroundColor: backgroundColor, borderColor: borderColor }));
+
+			_this2.position = { x: x - width / 2, y: y - height / 2 };
+			_this2.width = width;
+			_this2.height = height;
+			_this2.ctx = canvasContext;
+			return _this2;
+		}
+
+		_createClass(Dot, [{
+			key: 'draw',
+			value: function draw(_ref4) {
+				var _ref4$x = _ref4.x,
+				    x = _ref4$x === undefined ? this.position.x : _ref4$x,
+				    _ref4$y = _ref4.y,
+				    y = _ref4$y === undefined ? this.position.y : _ref4$y;
+
+				this.ctx.strokeStyle = this.borderColor;
+				this.ctx.fillStyle = this.backgroundColor;
+				this.ctx.rect(x - this.width / 2, y - this.height / 2, this.width, this.height);
+				this.ctx.stroke();
+				this.ctx.fill();
+				this.position = { x: x - this.width / 2, y: y - this.height / 2 };
+			}
+		}]);
+
+		return Dot;
+	}(Shape);
+
+	var Line = function (_Shape3) {
+		_inherits(Line, _Shape3);
 
 		function Line() {
 			_classCallCheck(this, Line);
