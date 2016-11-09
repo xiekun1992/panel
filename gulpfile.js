@@ -18,6 +18,7 @@ gulp.task('webpack', ()=>{
 		if(err){
 			throw err;
 		}
+		console.log('webpack complete.');
 	});
 });
 

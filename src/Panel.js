@@ -1,4 +1,4 @@
-import {Rectangle} from './Shape';
+import {Rectangle, Path} from './Shape';
 import Menu from './Menu';
 
 export default class Panel {
@@ -24,7 +24,11 @@ export default class Panel {
 		this.bgCanvas.classList.add('xpanel-background');
 
 		this.shapes = [];
+		this.paths = [];
 		this.activedShape = null;
+		// 是否处于连线状态
+		this.drawLine = false;
+		this.shapeRule = {};
 		
 		// 添加到dom
 		this.container.appendChild(this.frontCanvas);
@@ -40,6 +44,7 @@ export default class Panel {
 		// console.log(this.offset);
 		this.initEvents();
 		this.initBackground();
+		this.shapeRule['Rectangle'] = Rectangle;
 	}
 	findActiveShape(mouseX, mouseY, callback) {
 		let lastActivedShape = this.activedShape;
@@ -64,10 +69,16 @@ export default class Panel {
 			if(i < 0){
 				this.activedShape = null;
 			}
-			// 新选中了别的图形
+			// 新选中了别的图形或者画布
 			if(lastActivedShape && this.activedShape !== lastActivedShape){
-				lastActivedShape.setBorderColor();
-				this.repaint();
+				if(!this.activedShape){
+					// 落在画布上
+
+				}else{
+					// 落在图形上
+					lastActivedShape.setBorderColor();
+					this.repaint();
+				}
 			}
 		}
 	}
@@ -80,8 +91,10 @@ export default class Panel {
 			this.menu.show({startX: startX, startY: startY});
 			e.stopPropagation();
 		};
-		var onmousemove;
+		let onmousemove, path;
 		this.frontCanvas.addEventListener('mousedown', (e)=>{
+			// 避免鼠标超出边界后回来，事件没有注销
+			onmousemove && this.frontCanvas.removeEventListener('mousemove', onmousemove);
 			let startX = e.pageX, startY = e.pageY;
 			this.menu.hide();
 				// 由于层级覆盖，先检查上层的图形
@@ -89,14 +102,25 @@ export default class Panel {
 				this.findActiveShape(startX, startY, (activedShape, activedDot)=>{
 					// console.log(activedShape, activedDot)
 					onmousemove = (e)=>{
-						this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
+						if(this.drawLine && path){
+							path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+							console.log(path)
+							// path.draw();
+						}else{
+							this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
+						}
 						this.repaint();
 					};
-					if(activedShape){
+					// if(activedShape){
+						if(activedDot){
+							activedDot.setBackgroundColor('#f00');
+							activedDot.draw({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+							path = this.addPath(this.frontCtx, {x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+							path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+							// path = new Path(this.frontCtx, activedDot.center);
+						}
 						this.frontCanvas.addEventListener('mousemove', onmousemove);
-					}else if(activedDot){
-						this.frontCanvas.style.cursor='crosshair';
-					}
+					// }
 				});
 			}
 		});
@@ -104,24 +128,23 @@ export default class Panel {
 			this.frontCanvas.removeEventListener('mousemove', onmousemove);
 			this.activedShape && this.activedShape.drop();
 
+			this.drawLine = false;
 			let startX = e.pageX, startY = e.pageY;
 			this.findActiveShape(startX, startY, (activedShape)=>{
 				if(activedShape){
 					activedShape.setBorderColor('#f00');
 					this.repaint();
-					activedShape.drawDots();
 				}
 			});
 		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
 			e.preventDefault();
-			let rect = this.addShape({
-				mouseX: e.pageX-this.offset.left,
-				mouseY: e.pageY-this.offset.top,
+			this.addShape('Rectangle', {
+				x: e.pageX-this.offset.left,
+				y: e.pageY-this.offset.top,
 				data: JSON.parse(e.dataTransfer.getData('data')),
-				ctx: this.frontCtx
+				canvasContext: this.frontCtx
 			});
-			this.shapes.push(rect);
 		});
 		this.frontCanvas.addEventListener('dragover', (e)=>{
 			e.preventDefault();
@@ -165,8 +188,13 @@ export default class Panel {
 	}
 	repaint() {
 		this.frontCtx.clearRect(0, 0, this.width, this.height);
-		for(var s of this.shapes){
+		// 绘制图形
+		for(let s of this.shapes){
 			s.draw();
+		}
+		// 绘制路径
+		for(let p of this.paths){
+			p.draw();
 		}
 	}
 	deleteShape(shape) {
@@ -177,15 +205,17 @@ export default class Panel {
 			}
 		}
 	}
-	addShape({mouseX, mouseY, width, height, data, ctx}) {
-		return new Rectangle({
-				x: mouseX,
-				y: mouseY,
-				width, 
-				height, 
-				data,
-				canvasContext: ctx
-			});
+	addShape(type, ...params) {
+		console.log(this.shapeRule[type],params)
+		let shape = Reflect.construct(this.shapeRule[type], params);
+		this.shapes.push(shape);
+		return shape;
+	}
+	addPath(...params) {
+		console.log(Path,params)
+		let path = Reflect.construct(Path, params);
+		this.paths.push(path);
+		return path;
 	}
 	hasShape() {
 		return this.shapes.length > 0?true:false;

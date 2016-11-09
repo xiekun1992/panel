@@ -3,6 +3,7 @@ export default class Menu {
 		//type 可应用的元素, 0：全局, 1：图形, 2：画布
 		//0：始终可用，1、2：activeShape为空时自动禁用
 		this.options = [
+			{text: '连线', cb: this.drawLine, type: 1},
 			{text: '复制', cb: this.copyShape, type: 1},
 			{text: '粘贴', cb: this.pasteShape, type: 2},
 			{text: '剪切', cb: this.cuteShape, type: 1},
@@ -74,6 +75,12 @@ export default class Menu {
 				this.hide();
 			}
 		}
+	}
+	drawLine(panel, activedShape) {
+		panel.frontCanvas.style.cursor='crosshair';
+		panel.drawLine = true;
+		panel.repaint();
+		activedShape.drawDots();
 	}
 	deleteShape(panel, activedShape) {
 		panel.deleteShape(activedShape);

@@ -1,7 +1,7 @@
 let path = require('path');
 
 module.exports = {
-	entry: path.join(__dirname, 'src/draw.js'),
+	entry: ['babel-polyfill', './src/draw.js'],
 	debug: true,
 	output: {
 		path: path.join(__dirname, 'dist'),

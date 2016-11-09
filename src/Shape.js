@@ -101,24 +101,68 @@ export class Rectangle extends Shape {
 }
 
 class Dot extends Shape {
-	constructor({x, y, width = 6, height = 6, canvasContext, color, backgroundColor, borderColor}) {
+	constructor({x, y, width = 8, height = 8, canvasContext, color, backgroundColor, borderColor}) {
 		super({color, backgroundColor, borderColor});
 		this.position = {x: x - width/2, y: y - height/2};
 		this.width = width;
 		this.height = height;
 		this.ctx = canvasContext;
+		this.center = {x, y};
 	}
-	draw({x = this.position.x, y = this.position.y}) {
+	draw(position = {x: this.position.x, y: this.position.y}) {
 		this.ctx.strokeStyle = this.borderColor;
 		this.ctx.fillStyle = this.backgroundColor;
-		this.ctx.rect(x - this.width/2, y - this.height/2, this.width, this.height);
+		this.ctx.rect(position.x - this.width/2, position.y - this.height/2, this.width, this.height);
 		this.ctx.stroke();
 		this.ctx.fill();
-		this.position = {x: x - this.width/2, y: y - this.height/2};
-	}
-	
+		this.position = {x: position.x - this.width/2, y: position.y - this.height/2};
+	} 
 }
 
-class Line extends Shape {
+class Line {
+	constructor({x, y, canvasContext}) {
+		this.start={x, y};
+	}
+}
 
+export class Path {
+	// lines为二元坐标的数组
+	constructor(canvasContext, ...lines) {
+		this.lines = lines;
+		this.ctx = canvasContext;
+	}
+	begin({x, y}) {
+		this.lines[0] = {x, y};
+	}
+	close({x, y}) {
+		if(this.lines.length > 2){
+			this.lines[this.lines.length-1] = {x, y};
+		}else{
+			this.lines.push({x, y});
+		}
+	}
+	add({x, y}) {
+		this.lines.push({x, y});
+	}
+	drawLine() {
+		this.ctx.strokeStyle = '#000';
+		this.ctx.lineWidth = 1;
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
+		for(var l of this.lines.slice(1)){
+			this.ctx.lineTo(l.x, l.y);
+		}
+		this.ctx.stroke();
+		this.ctx.closePath();
+	}
+	// 绘制二阶贝塞尔曲线
+	draw() {
+		this.ctx.strokeStyle = '#555';
+		this.ctx.lineWidth = 1;
+		this.ctx.beginPath();
+		this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
+		this.ctx.quadraticCurveTo(this.lines[this.lines.length-1].x, this.lines[0].y, this.lines[this.lines.length-1].x, this.lines[this.lines.length-1].y);
+		this.ctx.stroke();
+		this.ctx.closePath();
+	}
 }
