@@ -43,9 +43,9 @@ export class Rectangle extends Shape {
 		this.ctx = ctx;
 		this.dots = [
 			new Dot({x: this.position.x+this.width/2, y: this.position.y, canvasContext: this.ctx, borderColor: '#f00'}), // 上
-			new Dot({x: this.position.x, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'}), // 右
+			new Dot({x: this.position.x+this.width, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'}), // 右
 			new Dot({x: this.position.x+this.width/2, y: this.position.y+this.height, canvasContext: this.ctx, borderColor: '#f00'}), // 下
-			new Dot({x: this.position.x+this.width, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'})  // 左
+			new Dot({x: this.position.x, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'}) // 左
 		];
 	}
 	setPosition(x, y) {
@@ -81,17 +81,25 @@ export class Rectangle extends Shape {
 		ctx.closePath();
 	}
 	drawDots() {
+		for(let d of this.dots){
+			d.resetColor();
+		}
 		this.dots[0].draw({x: this.position.x+this.width/2, y: this.position.y});
-		this.dots[1].draw({x: this.position.x, y: this.position.y+this.height/2});
+		this.dots[1].draw({x: this.position.x+this.width, y: this.position.y+this.height/2});
 		this.dots[2].draw({x: this.position.x+this.width/2, y: this.position.y+this.height});
-		this.dots[3].draw({x: this.position.x+this.width, y: this.position.y+this.height/2});
+		this.dots[3].draw({x: this.position.x, y: this.position.y+this.height/2});
+	}
+	findDot(dot) {
+		return this.dots.indexOf(dot);
+	}
+	findDotByIndex(index){
+		return this.dots[index];
 	}
 	isPointInDots(x, y){
 		// x, y 为相对画布的位置
-		for(var d of this.dots){
-			console.log(d.isPointInPath(x, y))
-			if(d.isPointInPath(x, y)){
-				return d;
+		for(let i=0;i<this.dots.length;i++){
+			if(this.dots[i].isPointInPath(x, y)){
+				return {dot: this.dots[i], direction: i};
 			}
 		}
 	}
@@ -109,12 +117,19 @@ class Dot extends Shape {
 		this.ctx = canvasContext;
 		this.center = {x, y};
 	}
+	resetColor() {
+		this.setBackgroundColor();
+		this.setBorderColor('#f00');
+		this.setColor();
+	}
 	draw(position = {x: this.position.x, y: this.position.y}) {
+		this.ctx.beginPath();
 		this.ctx.strokeStyle = this.borderColor;
 		this.ctx.fillStyle = this.backgroundColor;
 		this.ctx.rect(position.x - this.width/2, position.y - this.height/2, this.width, this.height);
 		this.ctx.stroke();
 		this.ctx.fill();
+		this.ctx.closePath();
 		this.position = {x: position.x - this.width/2, y: position.y - this.height/2};
 	} 
 }

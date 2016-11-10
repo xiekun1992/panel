@@ -79,7 +79,9 @@ export default class Menu {
 	drawLine(panel, activedShape) {
 		panel.frontCanvas.style.cursor='crosshair';
 		panel.drawLine = true;
-		panel.repaint();
+		// 记录连线的起始图形
+		panel.pathStart.shape = activedShape;
+		// panel.repaint();
 		activedShape.drawDots();
 	}
 	deleteShape(panel, activedShape) {
