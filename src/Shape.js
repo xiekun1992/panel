@@ -175,8 +175,24 @@ export class Path {
 		this.ctx.strokeStyle = '#555';
 		this.ctx.lineWidth = 1;
 		this.ctx.beginPath();
-		this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
-		this.ctx.quadraticCurveTo(this.lines[this.lines.length-1].x, this.lines[0].y, this.lines[this.lines.length-1].x, this.lines[this.lines.length-1].y);
+		let startX = this.lines[0].x, startY = this.lines[0].y,
+				endX = this.lines[this.lines.length-1].x, endY = this.lines[this.lines.length-1].y;
+		// 检测连接点相对位置情况来修改连接线的类型
+		switch(true){
+			// 终点在右上方，三阶贝塞尔曲线，以终点为起点绘制
+			case (startX > endX && startY < endY): 
+				this.ctx.moveTo(endX, endY);
+				this.ctx.bezierCurveTo(startX, endY, endX, startY, startX, startY);
+			 	break;
+			// 终点在左上方，三阶贝塞尔曲线，以起点绘制
+			case (startX < endX && startY < endY): 
+				this.ctx.moveTo(startX, startY);
+				this.ctx.bezierCurveTo(endX, startY, startX, endY, endX, endY);
+			 	break;
+			default:
+				this.ctx.moveTo(startX, startY);
+				this.ctx.quadraticCurveTo(endX, startY, endX, endY);
+		}
 		this.ctx.stroke();
 		this.ctx.closePath();
 	}
