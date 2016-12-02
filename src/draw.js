@@ -13,7 +13,7 @@ new Panel({
 			panel.importCanvasData([data]);
 		}, type: 0},
 		{text: '修改', cb: (panel, activeShape)=>{
-					console.log(activeShape)
+					// console.log(activeShape)
 			// 图形修改框
 			let alterModalBg = document.querySelector("#xpanelMenuAlter");
 			if(alterModalBg){
@@ -38,9 +38,6 @@ new Panel({
 				</div>
 				<div>
 					<span>前景颜色</span><input type="color" value="${activeShape.color}" name="color">
-				</div>
-				<div>
-					<span>边框颜色</span><input type="color" value="${activeShape.borderColor}" name="borderColor">
 				</div>
 				<div>
 					<button id="confirmAlter">确定</button>

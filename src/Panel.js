@@ -135,7 +135,7 @@ export default class Panel {
 					// if(activedShape){
 						if(activedDot){
 							// 绘制连接点标亮的状态
-							activedDot.setBackgroundColor('#f00');
+							activedDot.setBackgroundColor('#ff0000');
 							activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
 
 							relation = this.addPath(this.frontCtx, {x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
@@ -162,7 +162,7 @@ export default class Panel {
 			this.findActiveShape(startX, startY, (activedShape)=>{
 				console.log(activedShape)
 				if(activedShape){
-					activedShape.setBorderColor('#f00');
+					activedShape.setBorderColor('#ff0000');
 				}
 				this.repaint();
 			});
@@ -187,7 +187,7 @@ export default class Panel {
 					GRIDCOLS = this.bgCanvas.width / GRID_INTERVAL;
 
 		this.bgCtx.lineWidth=0.2;
-		this.bgCtx.strokeStyle='#555';
+		this.bgCtx.strokeStyle='#555555';
 		this.bgCtx.moveTo(0, 0);
 		for(var i=1;i<GRIDROWS;i++){
 			this.bgCtx.beginPath();
@@ -286,7 +286,7 @@ export default class Panel {
 		tmpCanvas.height=this.frontCanvas.height;
 		let tmpCtx = tmpCanvas.getContext('2d');
 
-		tmpCtx.fillStyle = '#fff';
+		tmpCtx.fillStyle = '#ffffff';
 		tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
 		for(var s of this.shapes){
 			s.draw(tmpCtx);
