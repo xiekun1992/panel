@@ -110,30 +110,41 @@ export default class Panel {
 					// console.log(activedShape, activedDot)
 					onmousemove = (e)=>{
 						if(this.drawLine && relation.path){
+							// 连线的末端点移动
 							relation.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
 							// path.draw();
 						}else{
-							this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
+							// console.log(this.activedShape)
+							this.activedShape && this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
 						}
 						this.repaint();
-						// 检测鼠标移动过程中碰到的图形和点
-						this.findActiveShape(e.pageX, e.pageY, (activedShape, activedDot)=>{
-							// 在连线的过程中碰到了图形，则显示连接点
+						if(this.drawLine){
+							// 仅在连线的时候检测鼠标移动过程中碰到的图形和点，防止因鼠标移动导致activeShape被替换
+							this.findActiveShape(e.pageX, e.pageY, (activedShape, activedDot)=>{
+								// 在连线的过程中碰到了图形，则显示连接点
+								if(activedShape){
+									// console.log(activedShape)
+									activedShape.drawDots();
+									// console.log(relation)
+									relation.end = this.shapes.indexOf(activedShape);
+								}
+								if(activedDot){
+									// 检查连接点是否在该图形内
+									// 确定该点的位置(小于0为未找到 or 大于0为找到)，创建连线
+									relation.endDot = activedShape.findDot(activedDot);
+									// console.log(relation)
+								}
+							});
+						}else{
+							// 非连线状态
 							if(activedShape){
-								// console.log(activedShape)
+								// 重新定位连线结点并绘制
 								activedShape.drawDots();
-								relation.end = this.shapes.indexOf(activedShape);
 							}
-							if(activedDot){
-								// 检查连接点是否在该图形内
-								// 确定该点的位置(小于0为未找到 or 大于0为找到)，创建连线
-								relation.endDot = activedShape.findDot(activedDot);
-								console.log(relation)
-							}
-						});
+						}
 					};
 					// if(activedShape){
-						if(activedDot){
+						if(this.drawLine && activedDot){
 							// 绘制连接点标亮的状态
 							activedDot.setBackgroundColor('#ff0000');
 							activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
