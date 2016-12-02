@@ -13,55 +13,55 @@ new Panel({
 			panel.importCanvasData([data]);
 		}, type: 0},
 		{text: '修改', cb: (panel, activeShape)=>{
+					console.log(activeShape)
 			// 图形修改框
-			let xpanelMenuAlter = document.querySelector("#xpanelMenuAlter");
-			if(xpanelMenuAlter){
-				xpanelMenuAlter.style.display="block";
+			let alterModalBg = document.querySelector("#xpanelMenuAlter");
+			if(alterModalBg){
+				alterModalBg.style.display="block";
 			}else{
-				let alterModalBg = document.createElement('div');
+				alterModalBg = document.createElement('div');
 				alterModalBg.classList.add('xpanel-saveimage-bg');
 				alterModalBg.setAttribute('id','xpanelMenuAlter');
-
-				alterModalBg.innerHTML=`
-				<div class="xpanel-menu-alter">
-					<h4>图形属性修改</h4>
-					<div>
-						<span>显示文本</span><input type="text" value="${activeShape.text}" name="text">
-					</div>
-					<div>
-						<span>字体大小</span><input type="range" value="${activeShape.font.size}" onchange="this.nextSibling.innerHTML=this.value+'px'" name="font.size" min="14" max="20" step="1"><small style="vertical-align: super;">${activeShape.font.size}px</small>
-					</div>
-					<div>
-						<span>背景颜色</span><input type="color" value="${activeShape.backgroundColor}" name="backgroundColor">
-					</div>
-					<div>
-						<span>前景颜色</span><input type="color" value="${activeShape.color}" name="color">
-					</div>
-					<div>
-						<span>边框颜色</span><input type="color" value="${activeShape.borderColor}" name="borderColor">
-					</div>
-					<div>
-						<button id="confirmAlter">确定</button>
-						<button onclick="this.parentNode.parentNode.parentNode.style.display='none'">取消</button>
-					</div>
-				</div>
-				`;
-
 				document.body.appendChild(alterModalBg);
-				document.querySelector("#confirmAlter").onclick=function (){
-					var inputs = document.querySelectorAll("#xpanelMenuAlter input");
-					for(var i of inputs){
-						let name = i.getAttribute('name');
-						let path = name.split('.'), propertyPath='activeShape';
-						for(var p of path){
-							propertyPath+=`['${p}']`;
-						}
-						console.log(propertyPath)
-						console.log(eval('('+propertyPath+'=i.value)'));
+			}
+			alterModalBg.innerHTML=`
+			<div class="xpanel-menu-alter">
+				<h4>图形属性修改</h4>
+				<div>
+					<span>显示文本</span><input type="text" value="${activeShape.text}" name="text">
+				</div>
+				<div>
+					<span>字体大小</span><input type="range" value="${activeShape.font.size}" onchange="this.nextSibling.innerHTML=this.value+'px'" name="font.size" min="14" max="20" step="1"><small style="vertical-align: super;">${activeShape.font.size}px</small>
+				</div>
+				<div>
+					<span>背景颜色</span><input type="color" value="${activeShape.backgroundColor}" name="backgroundColor">
+				</div>
+				<div>
+					<span>前景颜色</span><input type="color" value="${activeShape.color}" name="color">
+				</div>
+				<div>
+					<span>边框颜色</span><input type="color" value="${activeShape.borderColor}" name="borderColor">
+				</div>
+				<div>
+					<button id="confirmAlter">确定</button>
+					<button onclick="this.parentNode.parentNode.parentNode.style.display='none'">取消</button>
+				</div>
+			</div>
+			`;
+
+			document.querySelector("#confirmAlter").onclick=function (){
+				var inputs = document.querySelectorAll("#xpanelMenuAlter input");
+				for(var i of inputs){
+					let name = i.getAttribute('name');
+					let path = name.split('.'), propertyPath='activeShape';
+					for(var p of path){
+						propertyPath+=`['${p}']`;
 					}
-					activeShape.draw();
-					document.querySelector("#xpanelMenuAlter").style.display='none';
+					// console.log(propertyPath)
+					eval('('+propertyPath+'=i.value)');
 				}
+				activeShape.draw();
+				document.querySelector("#xpanelMenuAlter").style.display='none';
 			}
 			// console.log(activeShape)
 		}, type: 1}
