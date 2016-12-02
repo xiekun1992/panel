@@ -4,17 +4,18 @@ export default class Menu {
 		//0：始终可用，1、2：activeShape为空时自动禁用
 		this.options = [
 			{text: '连线', cb: this.drawLine, type: 1},
-			{text: '复制', cb: this.copyShape, type: 1},
-			{text: '粘贴', cb: this.pasteShape, type: 2},
-			{text: '剪切', cb: this.cuteShape, type: 1},
+			// {text: '复制', cb: this.copyShape, type: 1},
+			// {text: '粘贴', cb: this.pasteShape, type: 2},
+			// {text: '剪切', cb: this.cuteShape, type: 1}, 
 			{text: '删除', cb: this.deleteShape, type: 1},
 			{text: '保存为图片', cb: this.saveAsImage, type: 0},
 			...option
 		];
 
 		this.panel = panel;
-	  this.element = document.createElement('div');
-	  this.element.classList.add('xpanel-menu');
+		// 右键菜单
+	  	this.element = document.createElement('div');
+	  	this.element.classList.add('xpanel-menu');
 		let ul = document.createElement('ul'), frag = document.createDocumentFragment();
 		for(let e of this.options){
 			let li = document.createElement('li');
@@ -25,6 +26,8 @@ export default class Menu {
 		}
 		frag.appendChild(ul);
 		this.element.appendChild(frag);
+
+		
 	}
 	disable(DOMElement, ...type) {
 		if(type.indexOf(parseInt(DOMElement.getAttribute('data-menutype'))) !== -1){
@@ -96,6 +99,9 @@ export default class Menu {
 	}
 	pasteShape(panel, activedShape) {
 		alert('pasteShape');
+	}
+	alterShape(panel, activedShape) {
+
 	}
 	saveAsImage() {
 		this.hide();

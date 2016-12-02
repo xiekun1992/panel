@@ -1,16 +1,16 @@
 class Shape {
-	constructor({color = '#000', backgroundColor = '#fff', borderColor = '#000'}) {
+	constructor({color = '#000000', backgroundColor = '#ffffff', borderColor = '#000000'}) {
 		this.color = color;
 		this.backgroundColor = backgroundColor;
 		this.borderColor = borderColor;
 	}
-	setColor(color = '#000') {
+	setColor(color = '#000000') {
 		this.color = color;
 	}
-	setBackgroundColor(color = '#fff') {
+	setBackgroundColor(color = '#ffffff') {
 		this.backgroundColor = color;
 	}
-	setBorderColor(color = '#000') {
+	setBorderColor(color = '#000000') {
 		this.borderColor = color;
 	}
 	isPointInPath(x, y) {
@@ -42,10 +42,10 @@ export class Rectangle extends Shape {
 	setContext(ctx) {
 		this.ctx = ctx;
 		this.dots = [
-			new Dot({x: this.position.x+this.width/2, y: this.position.y, canvasContext: this.ctx, borderColor: '#f00'}), // 上
-			new Dot({x: this.position.x+this.width, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'}), // 右
-			new Dot({x: this.position.x+this.width/2, y: this.position.y+this.height, canvasContext: this.ctx, borderColor: '#f00'}), // 下
-			new Dot({x: this.position.x, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#f00'}) // 左
+			new Dot({x: this.position.x+this.width/2, y: this.position.y, canvasContext: this.ctx, borderColor: '#ff0000'}), // 上
+			new Dot({x: this.position.x+this.width, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#ff0000'}), // 右
+			new Dot({x: this.position.x+this.width/2, y: this.position.y+this.height, canvasContext: this.ctx, borderColor: '#ff0000'}), // 下
+			new Dot({x: this.position.x, y: this.position.y+this.height/2, canvasContext: this.ctx, borderColor: '#ff0000'}) // 左
 		];
 	}
 	setPosition(x, y) {
@@ -119,7 +119,7 @@ class Dot extends Shape {
 	}
 	resetColor() {
 		this.setBackgroundColor();
-		this.setBorderColor('#f00');
+		this.setBorderColor('#ff0000');
 		this.setColor();
 	}
 	draw(position = {x: this.position.x, y: this.position.y}) {
@@ -160,7 +160,7 @@ export class Path {
 		this.lines.push({x, y});
 	}
 	drawLine() {
-		this.ctx.strokeStyle = '#000';
+		this.ctx.strokeStyle = '#000000';
 		this.ctx.lineWidth = 1;
 		this.ctx.beginPath();
 		this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
@@ -172,7 +172,7 @@ export class Path {
 	}
 	// 绘制二阶贝塞尔曲线
 	draw() {
-		this.ctx.strokeStyle = '#555';
+		this.ctx.strokeStyle = '#555555';
 		this.ctx.lineWidth = 1;
 		this.ctx.beginPath();
 		let startX = this.lines[0].x, startY = this.lines[0].y,
