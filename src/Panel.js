@@ -1,5 +1,7 @@
-import {Rectangle, Path} from './Shape';
+import {Rectangle, Line} from './Shape';
 import Menu from './Menu';
+// 产生每个图形的id
+let incrementalId=1;
 
 export default class Panel {
 	constructor({container, width = 400, height = 400, menuOption}) {
@@ -49,6 +51,7 @@ export default class Panel {
 		this.initEvents();
 		this.initBackground();
 		this.shapeRule['Rectangle'] = Rectangle;
+		this.shapeRule['Line'] = Line;
 	}
 	// 查找激活的连线
 	findActiveLine(mouseX, mouseY, callback) {
@@ -138,7 +141,7 @@ export default class Panel {
 									// console.log(activedShape)
 									activedShape.drawDots();
 									// console.log(relation)
-									relation.end = activedShape.id;
+									relation.endShapeId = activedShape.id;
 								}
 								if(activedDot){
 									// 检查连接点是否在该图形内
@@ -161,8 +164,7 @@ export default class Panel {
 							activedDot.setBackgroundColor('#ff0000');
 							activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
 
-							relation = this.addPath(this.frontCtx, {x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
-							// path = new Path(this.frontCtx, activedDot.center);
+							relation = this.addPath({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
 						}
 
 						this.frontCanvas.addEventListener('mousemove', onmousemove);
@@ -250,13 +252,13 @@ export default class Panel {
 		}
 		// 绘制路径
 		for(let r of this.paths){
-			if(r.start && r.end){
+			if(r.startShapeId && r.endShapeId){
 				let sdot,edot;
 				for(var s of this.shapes){
-					if(s.id===r.start){
+					if(s.id===r.startShapeId){
 						sdot = s.findDotByIndex(r.startDot);
 					}
-					if(s.id===r.end){
+					if(s.id===r.endShapeId){
 						edot = s.findDotByIndex(r.endDot);
 					}
 				}
@@ -275,7 +277,7 @@ export default class Panel {
 				this.shapes.splice(i,1);
 				// splice会改变数组长度，从后往前删除不会受长度变化影响
 				for(let j=this.paths.length-1;j>-1;j--){
-					if(this.paths[j] && (this.paths[j].start===shape.id || this.paths[j].end===shape.id)){
+					if(this.paths[j] && (this.paths[j].startShapeId===shape.id || this.paths[j].endShapeId===shape.id)){
 						this.deletePath(this.paths[j]);
 					}
 				}
@@ -284,20 +286,24 @@ export default class Panel {
 		}
 	}
 	addShape(type, ...params) {
+		if(!params[0].id){
+			params[0].id=incrementalId++;
+		}
 		let shape = Reflect.construct(this.shapeRule[type], params);
 		this.shapes.push(shape);
 		return shape;
 	}
-	addPath(...params) {
-		let path = Reflect.construct(Path, params);
+	addPath(...params) {		
 		// 记录连线的关系，所连图形的
-		let relation = {
-			start: this.pathStart.shape.id, 
-			end: null, 
-			path: path, 
+		let relation = new Line({
+			id: incrementalId++,
+			canvasContext: this.frontCtx,
+			startShapeId: this.pathStart.shape.id,
+			endShapeId: null,
+			pathParams: params,
 			startDot: this.dotInfo.direction,
 			endDot: -1 // 默认无连接点
-		};
+		});
 		this.paths.push(relation);
 		return relation;
 	}
@@ -308,18 +314,52 @@ export default class Panel {
 		return this.shapes.length > 0?true:false;
 	}
 	exportCanavsData() {
-		let metaData = [];
+		let metaData = {
+			shapes:[],
+			lines:[]
+		};
+		// 导出图形
 		for(let s of this.shapes){
-			metaData.push(s.exportMetaData());
+			metaData.shapes.push(s.exportMetaData());
+		}
+		// 导出连线
+		for(let p of this.paths){
+			metaData.lines.push(p.exportMetaData());
 		}
 		return metaData;
 	}
 	importCanvasData(metaData) {
-		for(var d of metaData){
-			d['canvasContext'] = this.frontCtx;
-			let rect = new Rectangle(d);
-			this.shapes.push(rect);
+		this.reset();
+		// 记录导入数据后的id值
+		let finalId=0;
+		// 导入图形
+		for(let s of metaData.shapes){
+			s['canvasContext'] = this.frontCtx;
+			s.x=s.position.x+s.width/2;
+			s.y=s.position.y+s.height/2;
+			if(s.id > finalId){
+				finalId=s.id;
+			}
+			this.addShape(s.shape, s);
 		}
+		// 导入连线
+		for(let l of metaData.lines){
+			l['canvasContext'] = this.frontCtx;
+			if(l.id > finalId){
+				finalId=l.id;
+			}
+			let line = Reflect.construct(this.shapeRule[l.shape], [l]);
+			this.paths.push(line);
+		}
+		this.repaint();
+		// 确定下次的id起始值
+		incrementalId = finalId+1;
+	}
+	reset() {
+		this.frontCtx.clearRect(0, 0, this.width, this.height);
+		this.shapes=[];
+		this.paths=[];
+		incrementalId=1;
 	}
 	saveAsImage() {
 		let tmpCanvas = document.createElement('canvas');
@@ -331,6 +371,9 @@ export default class Panel {
 		tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
 		for(var s of this.shapes){
 			s.draw(tmpCtx);
+		}
+		for(let p of this.paths){
+			p.path.draw(tmpCtx);
 		}
 
 		let image = new Image();

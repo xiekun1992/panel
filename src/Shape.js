@@ -1,12 +1,16 @@
-let incrementalId=1;
-
 class Shape {
-	constructor({color = '#000000', backgroundColor = '#ffffff', borderColor = '#000000'}) {
+	constructor({id, color = '#000000', backgroundColor = '#ffffff', borderColor = '#000000', font = {}}) {
 		this.color = color;
 		this.backgroundColor = backgroundColor;
 		this.borderColor = borderColor;
-		this.id=incrementalId++;
-		console.log(this.id)
+		this.id=id;
+		this.shape='Shape';
+
+		this.font = {
+			size: 18,
+			family: 'Helvetica'
+		};
+		this.font = Object.assign(this.font, font);
 	}
 	setColor(color = '#000000') {
 		this.color = color;
@@ -17,28 +21,35 @@ class Shape {
 	setBorderColor(color = '#000000') {
 		this.borderColor = color;
 	}
+	getFont() {
+		return this.font.size+'px "'+this.font.family+'"';
+	}
 	isPointInPath(x, y) {
 		// x, y 为相对画布的位置
 		// console.log(this.position.x, this.position.y, this.width, this.height)
 		return this.position.x<=x && x<=(this.position.x+this.width) && this.position.y<=y && y<=(this.position.y+this.height)?true:false;
 	}
+	exportMetaData() {
+		return {
+			id: this.id,
+			color: this.color,
+			backgroundColor: this.backgroundColor,
+			borderColor: this.borderColor,
+			shape: this.shape
+		}
+	}
 }
 
 export class Rectangle extends Shape {
-	constructor({x = 10, y = 10, width = 80, height = 40, data, canvasContext, color, backgroundColor, borderColor}) {
-		super({color, backgroundColor, borderColor});
+	// x,y表示鼠标相对画布所在位置, position.x,position.y为图形相对画布位置
+	constructor({id, x = 10, y = 10, width = 80, height = 40, data, canvasContext, color, backgroundColor, borderColor, font}) {
+		super({id, color, backgroundColor, borderColor, font});
+		this.shape='Rectangle';
 		this.width = width;
 		this.height = height;
 		this.position = {x: x-width/2, y: y-height/2, originX: x-width/2, originY: y-height/2};
 		this.data = data;
 		this.text = this.data.text || '';
-		this.font = {
-			size: 18,
-			family: 'Helvetica',
-			toString() {
-				return this.size+'px "'+this.family+'"';
-			}
-		};
 		// this.ctx = canvasContext;
 		this.setContext(canvasContext);
 		this.draw();
@@ -67,7 +78,7 @@ export class Rectangle extends Shape {
 		ctx.beginPath();
 		ctx.fillStyle = this.backgroundColor;
 		ctx.textAlign='center';
-		ctx.font=this.font.toString();
+		ctx.font=this.getFont();
 		ctx.textBaseline='middle';
 		// ctx.shadowBlur=2;
 		// ctx.shadowColor=this.borderColor || '#bbb';
@@ -108,13 +119,17 @@ export class Rectangle extends Shape {
 		}
 	}
 	exportMetaData() {
-		return {x: this.position.x, y: this.position.y, width: this.width, height: this.height, data: this.data};
+		let superMetaData = super.exportMetaData();
+		this.data.text=this.text;
+		return Object.assign(superMetaData, {position: { x: this.position.x, y: this.position.y }, width: this.width, height: this.height, data: this.data, font: this.font});
+		
 	}
 }
 
 class Dot extends Shape {
-	constructor({x, y, width = 8, height = 8, canvasContext, color, backgroundColor, borderColor}) {
-		super({color, backgroundColor, borderColor});
+	constructor({id, x, y, width = 8, height = 8, canvasContext, color, backgroundColor, borderColor, font}) {
+		super({color, backgroundColor, borderColor, font});
+		this.shape='Dot';
 		this.position = {x: x - width/2, y: y - height/2};
 		this.width = width;
 		this.height = height;
@@ -138,18 +153,35 @@ class Dot extends Shape {
 	} 
 }
 
-class Line {
-	constructor({x, y, canvasContext}) {
-		this.start={x, y};
+export class Line extends Shape {
+	constructor({id, canvasContext, startShapeId, endShapeId, startDot, endDot, pathParams, font}) {
+		super({id, font});
+		this.shape='Line';
+		pathParams.unshift(canvasContext);
+		this.path = Reflect.construct(Path, pathParams);
+		this.startShapeId=startShapeId;
+		this.endShapeId=endShapeId;
+		this.startDot=startDot;
+		this.endDot=endDot;
+	}
+	exportMetaData() {
+		let superMetaData = super.exportMetaData();
+		return Object.assign(superMetaData, {
+			startShapeId: this.startShapeId, 
+			endShapeId: this.endShapeId, 
+			startDot: this.startDot, 
+			endDot: this.endDot, 
+			pathParams: this.path.exportMetaData()
+		});
 	}
 }
 
-export class Path {
+class Path {
 	// lines为二元坐标的数组
 	constructor(canvasContext, ...lines) {
 		this.lines = lines;
 		this.ctx = canvasContext;
-		this.id=incrementalId++;
+		// this.id=incrementalId++;
 	}
 	begin({x, y}) {
 		this.lines[0] = {x:x+4, y:y+4};
@@ -176,10 +208,10 @@ export class Path {
 		this.ctx.closePath();
 	}
 	// 绘制二阶贝塞尔曲线
-	draw() {
-		this.ctx.strokeStyle = '#555555';
-		this.ctx.lineWidth = 2;
-		this.ctx.beginPath();
+	draw(ctx = this.ctx) {
+		ctx.strokeStyle = '#555555';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
 		let startX = this.lines[0].x, startY = this.lines[0].y,
 				endX = this.lines[this.lines.length-1].x, endY = this.lines[this.lines.length-1].y;
 		// 检测连接点相对位置情况来修改连接线的类型
@@ -195,10 +227,13 @@ export class Path {
 			// 	this.ctx.bezierCurveTo(endX, startY, startX, endY, endX, endY);
 			//  	break;
 			default:
-				this.ctx.moveTo(startX, startY);
-				this.ctx.quadraticCurveTo(endX, startY, endX, endY);
+				ctx.moveTo(startX, startY);
+				ctx.quadraticCurveTo(endX, startY, endX, endY);
 		}
-		this.ctx.stroke();
-		this.ctx.closePath();
+		ctx.stroke();
+		ctx.closePath();
+	}
+	exportMetaData() {
+		return this.lines;
 	}
 }
