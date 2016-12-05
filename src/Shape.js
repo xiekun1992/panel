@@ -1,8 +1,12 @@
+let incrementalId=1;
+
 class Shape {
 	constructor({color = '#000000', backgroundColor = '#ffffff', borderColor = '#000000'}) {
 		this.color = color;
 		this.backgroundColor = backgroundColor;
 		this.borderColor = borderColor;
+		this.id=incrementalId++;
+		console.log(this.id)
 	}
 	setColor(color = '#000000') {
 		this.color = color;
@@ -145,19 +149,20 @@ export class Path {
 	constructor(canvasContext, ...lines) {
 		this.lines = lines;
 		this.ctx = canvasContext;
+		this.id=incrementalId++;
 	}
 	begin({x, y}) {
-		this.lines[0] = {x, y};
+		this.lines[0] = {x:x+4, y:y+4};
 	}
 	close({x, y}) {
 		if(this.lines.length > 2){
-			this.lines[this.lines.length-1] = {x, y};
+			this.lines[this.lines.length-1] = {x:x+4, y:y+4};
 		}else{
-			this.lines.push({x, y});
+			this.lines.push({x:x+4, y:y+4});
 		}
 	}
 	add({x, y}) {
-		this.lines.push({x, y});
+		this.lines.push({x:x+4, y:y+4});
 	}
 	drawLine() {
 		this.ctx.strokeStyle = '#000000';
@@ -173,22 +178,22 @@ export class Path {
 	// 绘制二阶贝塞尔曲线
 	draw() {
 		this.ctx.strokeStyle = '#555555';
-		this.ctx.lineWidth = 1;
+		this.ctx.lineWidth = 2;
 		this.ctx.beginPath();
 		let startX = this.lines[0].x, startY = this.lines[0].y,
 				endX = this.lines[this.lines.length-1].x, endY = this.lines[this.lines.length-1].y;
 		// 检测连接点相对位置情况来修改连接线的类型
 		switch(true){
 			// 终点在右上方，三阶贝塞尔曲线，以终点为起点绘制
-			case (startX > endX && startY < endY): 
-				this.ctx.moveTo(endX, endY);
-				this.ctx.bezierCurveTo(startX, endY, endX, startY, startX, startY);
-			 	break;
+			// case (startX > endX && startY < endY): 
+			// 	this.ctx.moveTo(endX, endY);
+			// 	this.ctx.bezierCurveTo(startX, endY, endX, startY, startX, startY);
+			//  	break;
 			// 终点在左上方，三阶贝塞尔曲线，以起点绘制
-			case (startX < endX && startY < endY): 
-				this.ctx.moveTo(startX, startY);
-				this.ctx.bezierCurveTo(endX, startY, startX, endY, endX, endY);
-			 	break;
+			// case (startX < endX && startY < endY): 
+			// 	this.ctx.moveTo(startX, startY);
+			// 	this.ctx.bezierCurveTo(endX, startY, startX, endY, endX, endY);
+			//  	break;
 			default:
 				this.ctx.moveTo(startX, startY);
 				this.ctx.quadraticCurveTo(endX, startY, endX, endY);
