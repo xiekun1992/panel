@@ -119,8 +119,8 @@ export default class Panel {
 				// 由于层级覆盖，先检查上层的图形
 			if(e.button === 0){ // 鼠标左键
 				this.findActiveShape(startX, startY, (activedShape, activedDot)=>{
-					console.log(this.activedShape)
 					if(!activedShape){
+						// 全局拖动
 						onmousemove= (e)=>{
 							this.move=true;
 							this.repaint(e.pageX-startX, e.pageY-startY);	
@@ -184,8 +184,6 @@ export default class Panel {
 				for(let s of this.shapes){
 					s.drop();
 				}
-				// this.repaint();
-				console.log(this.paths[0])
 				this.move = false;
 			}
 			this.pathStart = {};
@@ -253,10 +251,11 @@ export default class Panel {
 	}
 	// x,y为鼠标移动值
 	repaint(x = 0,y = 0) {
+		console.log(x,y)
 		this.frontCtx.clearRect(0, 0, this.width, this.height);
 		// 绘制图形
 		for(let s of this.shapes){
-			if(x && y){
+			if(this.move){
 				s.setPosition(x, y);
 			}
 			s.draw();
@@ -274,13 +273,17 @@ export default class Panel {
 					}
 				}
 				if(sdot && edot){
-					if(x && y){
-						r.path.begin({x: sdot.position.x + x, y: sdot.position.y + y});
-						r.path.close({x: edot.position.x + x, y: edot.position.y + y});
-					}else{
-						r.path.begin({x: sdot.position.x, y: sdot.position.y});
-						r.path.close({x: edot.position.x, y: edot.position.y});
+					let pathStart = {x: sdot.position.x, y: sdot.position.y},
+						pathEnd = {x: edot.position.x, y: edot.position.y};
+					if(this.move){
+						pathStart.x+=x;
+						pathStart.y+=y;
+
+						pathEnd.x+=x;
+						pathEnd.y+=y;
 					}
+					r.path.begin(pathStart);
+					r.path.close(pathEnd);
 					r.path.draw();
 				}
 			}
