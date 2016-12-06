@@ -8,7 +8,8 @@ class Shape {
 
 		this.font = {
 			size: 18,
-			family: 'Helvetica'
+			// family: 'Helvetica'
+			family: 'Microsoft yahei'
 		};
 		this.font = Object.assign(this.font, font);
 	}
@@ -22,7 +23,7 @@ class Shape {
 		this.borderColor = color;
 	}
 	getFont() {
-		return this.font.size+'px "'+this.font.family+'"';
+		return `${this.font.size}px ${this.font.family}`;
 	}
 	isPointInPath(x, y) {
 		// x, y 为相对画布的位置
@@ -78,7 +79,6 @@ export class Rectangle extends Shape {
 		ctx.beginPath();
 		ctx.fillStyle = this.backgroundColor;
 		ctx.textAlign='center';
-		ctx.font=this.getFont();
 		ctx.textBaseline='middle';
 		// ctx.shadowBlur=2;
 		// ctx.shadowColor=this.borderColor || '#bbb';
@@ -92,6 +92,7 @@ export class Rectangle extends Shape {
 		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
 		ctx.shadowBlur=0;
 		ctx.fillStyle=this.color;
+		ctx.font=this.getFont();
 		ctx.fillText(this.text, this.position.x+this.width/2, this.position.y+this.height/2);
 		ctx.closePath();
 	}

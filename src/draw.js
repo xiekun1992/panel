@@ -57,7 +57,7 @@ new Panel({
 					// console.log(propertyPath)
 					eval('('+propertyPath+'=i.value)');
 				}
-				activeShape.draw();
+				panel.repaint();
 				document.querySelector("#xpanelMenuAlter").style.display='none';
 			}
 			// console.log(activeShape)
