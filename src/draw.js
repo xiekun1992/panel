@@ -3,7 +3,7 @@ import Panel from './Panel';
 new Panel({
 	container: '#panel',
 	width: 800,
-	height: 400,
+	height: 600,
 	menuOption: [
 		{text: '导出元数据', cb: (panel)=>{
 			localStorage.setItem("xpanel",JSON.stringify(panel.exportCanavsData()));

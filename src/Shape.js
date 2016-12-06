@@ -71,6 +71,11 @@ export class Rectangle extends Shape {
 	drop() {
 		this.position.originX = this.position.x;
 		this.position.originY = this.position.y;
+		
+		this.dots[0].setPosition({x: this.position.x+this.width/2, y: this.position.y});
+		this.dots[1].setPosition({x: this.position.x+this.width, y: this.position.y+this.height/2});
+		this.dots[2].setPosition({x: this.position.x+this.width/2, y: this.position.y+this.height});
+		this.dots[3].setPosition({x: this.position.x, y: this.position.y+this.height/2});
 	}
 	clear() {
 		this.ctx.clearRect(this.position.x-1, this.position.y-1, this.width+2, this.height+2);
@@ -131,11 +136,15 @@ class Dot extends Shape {
 	constructor({id, x, y, width = 8, height = 8, canvasContext, color, backgroundColor, borderColor, font}) {
 		super({color, backgroundColor, borderColor, font});
 		this.shape='Dot';
-		this.position = {x: x - width/2, y: y - height/2};
+		// this.position = {x: x - width/2, y: y - height/2};
 		this.width = width;
 		this.height = height;
 		this.ctx = canvasContext;
 		this.center = {x, y};
+		this.setPosition({x,y});
+	}
+	setPosition({x,y}) {
+		this.position = {x: x - this.width/2, y: y - this.height/2};
 	}
 	resetColor() {
 		this.setBackgroundColor();

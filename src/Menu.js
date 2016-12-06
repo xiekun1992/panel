@@ -116,7 +116,13 @@ export default class Menu {
 
 			div.classList.add('xpanel-saveimage-bg');
 			mention.classList.add('xpanel-saveimage-mention');
-			mention.innerHTML = '在图片上 <span style="font-weight:bold;">鼠标右键另存为</span> 或者 <span style="font-weight:bold;">点击图片</span> 下载, <a href="javascript:void(0)" onclick="document.body.removeChild(this.parentNode.parentNode)">取消</a>';
+			mention.innerHTML = `在图片上 
+								<span style="font-weight:bold;">鼠标右键另存为</span> 
+								或者 
+								<span style="font-weight:bold;">点击图片</span> 
+								下载, 
+								<a href="javascript:void(0)" onclick="document.body.removeChild(this.parentNode.parentNode)">取消</a>
+								`;
 			img.setAttribute('alt', imageName);
 			img.setAttribute('title', imageName);
 			a.setAttribute('title', imageName);

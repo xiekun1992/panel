@@ -32,6 +32,8 @@ export default class Panel {
 		this.activedShape = null;
 		// 是否处于连线状态
 		this.drawLine = false;
+		// 是否处于局部/整体拖动状态
+		this.move = false;
 		// 新建路径的起点图形
 		this.pathStart = {shape: null, direction: null};
 		this.shapeRule = {};
@@ -63,7 +65,7 @@ export default class Panel {
 			// if(pointInCanvasLeft>p.path.lines[0].x && pointInCanvasLeft<p.path.lines[p.path.lines.length-1].x 
 			   // && pointInCanvasTop)
 		}
-		console.log(this.paths);
+		// console.log(this.paths);
 	}
 	findActiveShape(mouseX, mouseY, callback) {
 		let lastActivedShape = this.activedShape;
@@ -90,17 +92,12 @@ export default class Panel {
 			}
 			if(i < 0){
 				this.activedShape = null;
+				callback && callback();
 			}
 			// 新选中了别的图形或者画布
 			if(lastActivedShape && this.activedShape !== lastActivedShape){
-				// if(!this.activedShape){
-					// 落在画布上
-
-				// }else{
-					// 落在图形上
-					lastActivedShape.setBorderColor();
-					this.repaint();
-				// }
+				lastActivedShape.setBorderColor();
+				this.repaint();
 			}
 		}
 	}
@@ -122,56 +119,57 @@ export default class Panel {
 				// 由于层级覆盖，先检查上层的图形
 			if(e.button === 0){ // 鼠标左键
 				this.findActiveShape(startX, startY, (activedShape, activedDot)=>{
-					// console.log(activedShape, activedDot)
-					onmousemove = (e)=>{
-						if(this.drawLine && relation.path){
-							// 连线的末端点移动
-							relation.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
-							// path.draw();
-						}else{
-							// console.log(this.activedShape)
-							this.activedShape && this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
-						}
-						this.repaint();
-						if(this.drawLine){
-							// 仅在连线的时候检测鼠标移动过程中碰到的图形和点，防止因鼠标移动导致activeShape被替换
-							this.findActiveShape(e.pageX, e.pageY, (activedShape, activedDot)=>{
-								// 在连线的过程中碰到了图形，则显示连接点
-								if(activedShape){
-									// console.log(activedShape)
-									activedShape.drawDots();
-									// console.log(relation)
-									relation.endShapeId = activedShape.id;
-								}
-								if(activedDot){
-									// 检查连接点是否在该图形内
-									// 确定该点的位置(小于0为未找到 or 大于0为找到)，创建连线
-									relation.endDot = activedShape.findDot(activedDot);
-									// console.log(relation)
-								}
-							});
-						}else{
-							// 非连线状态
-							if(activedShape){
-								// 重新定位连线结点并绘制
-								activedShape.drawDots();
+					console.log(this.activedShape)
+					if(!activedShape){
+						onmousemove= (e)=>{
+							this.move=true;
+							this.repaint(e.pageX-startX, e.pageY-startY);	
+						};
+					}else{
+						onmousemove = (e)=>{
+							if(this.drawLine && relation.path){
+								// 连线的末端点移动
+								relation.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+							}else{
+								this.activedShape && this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
 							}
-						}
-					};
-					// if(activedShape){
-						if(this.drawLine && activedDot){
-							// 绘制连接点标亮的状态
-							activedDot.setBackgroundColor('#ff0000');
-							activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
+							this.repaint();
+							if(this.drawLine){
+								// 仅在连线的时候检测鼠标移动过程中碰到的图形和点，防止因鼠标移动导致activeShape被替换
+								this.findActiveShape(e.pageX, e.pageY, (activedShape, activedDot)=>{
+									// 在连线的过程中碰到了图形，则显示连接点
+									if(activedShape){
+										activedShape.drawDots();
+										relation.endShapeId = activedShape.id;
+									}
+									if(activedDot){
+										// 检查连接点是否在该图形内
+										// 确定该点的位置(小于0为未找到 or 大于0为找到)，创建连线
+										relation.endDot = activedShape.findDot(activedDot);
+									}
+								});
+							}else{
+								// 非连线状态
+								if(activedShape){
+									// 重新定位连线结点并绘制
+									activedShape.drawDots();
+								}
+							}
+						};
+					}
+					if(this.drawLine && activedDot){
+						// 绘制连接点标亮的状态
+						activedDot.setBackgroundColor('#ff0000');
+						activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
 
-							relation = this.addPath({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
-						}
+						relation = this.addPath({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+					}
 
-						this.frontCanvas.addEventListener('mousemove', onmousemove);
-					// }
+					this.frontCanvas.addEventListener('mousemove', onmousemove);
+
 				});
 				this.findActiveLine(startX, startY, (activeLine)=>{
-					console.log(activeLine)
+					// console.log(activeLine)
 				});
 			}
 		});
@@ -179,7 +177,17 @@ export default class Panel {
 			this.frontCanvas.removeEventListener('mousemove', onmousemove);
 			this.activedShape && this.activedShape.drop();
 
+			// 处于连线状态
 			this.drawLine = false;
+			// 处于移动图形状态
+			if(this.move){
+				for(let s of this.shapes){
+					s.drop();
+				}
+				// this.repaint();
+				console.log(this.paths[0])
+				this.move = false;
+			}
 			this.pathStart = {};
 			if(relation.path && relation.endDot < 0){
 				this.deletePath(relation);
@@ -188,7 +196,6 @@ export default class Panel {
 			this.frontCanvas.style.cursor='default';
 			let startX = e.pageX, startY = e.pageY;
 			this.findActiveShape(startX, startY, (activedShape)=>{
-				console.log(activedShape)
 				if(activedShape){
 					activedShape.setBorderColor('#ff0000');
 				}
@@ -244,17 +251,21 @@ export default class Panel {
 		top += DOMElement.offsetTop;
 		return {left: left, top: top};
 	}
-	repaint() {
+	// x,y为鼠标移动值
+	repaint(x = 0,y = 0) {
 		this.frontCtx.clearRect(0, 0, this.width, this.height);
 		// 绘制图形
 		for(let s of this.shapes){
+			if(x && y){
+				s.setPosition(x, y);
+			}
 			s.draw();
 		}
 		// 绘制路径
-		for(let r of this.paths){
+		for(var r of this.paths){
 			if(r.startShapeId && r.endShapeId){
 				let sdot,edot;
-				for(var s of this.shapes){
+				for(let s of this.shapes){
 					if(s.id===r.startShapeId){
 						sdot = s.findDotByIndex(r.startDot);
 					}
@@ -263,11 +274,17 @@ export default class Panel {
 					}
 				}
 				if(sdot && edot){
-					r.path.begin({x: sdot.position.x, y: sdot.position.y});
-					r.path.close({x: edot.position.x, y: edot.position.y});
+					if(x && y){
+						r.path.begin({x: sdot.position.x + x, y: sdot.position.y + y});
+						r.path.close({x: edot.position.x + x, y: edot.position.y + y});
+					}else{
+						r.path.begin({x: sdot.position.x, y: sdot.position.y});
+						r.path.close({x: edot.position.x, y: edot.position.y});
+					}
 					r.path.draw();
 				}
 			}
+			
 		}
 	}
 	deleteShape(shape) {
