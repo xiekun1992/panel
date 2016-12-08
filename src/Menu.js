@@ -16,6 +16,7 @@ export default class Menu {
 		this.panel = panel;
 		// 右键菜单
 	  	this.element = document.createElement('div');
+	  	this.element.oncontextmenu=function(){return false;};
 	  	this.element.classList.add('xpanel-menu');
 		let ul = document.createElement('ul'), frag = document.createDocumentFragment();
 		for(let e of this.options){
@@ -47,8 +48,6 @@ export default class Menu {
 		}
 	}
 	show({startX, startY}) {
-		this.element.style.top=startY-window.scrollY+2+'px';
-		this.element.style.left=startX-window.scrollX+2+'px';
 
 		let onShape = this.panel.activedShape?true:false,
 			onLine = this.panel.activedLine?true:false,
@@ -66,6 +65,21 @@ export default class Menu {
 			// 	this.toggleGlobalOperation(e);
 			// }
 		}
+		let offsetLeft=startX-window.scrollX+2,
+			offsetTop=startY-window.scrollY+2,
+			tmpHeight=this.element.clientHeight,
+			tmpWidth=this.element.clientWidth;
+
+		// 判断当前位置是否接触到边界
+		if(tmpWidth+offsetLeft>=document.body.clientWidth){
+			offsetLeft-=(tmpWidth + 4);
+		}
+		if(tmpHeight+offsetTop>=document.body.clientHeight){
+			offsetTop-=(tmpHeight + 4);
+		}
+
+		this.element.style.top=offsetTop+'px';
+		this.element.style.left=offsetLeft+'px';
 		this.element.classList.add('show');
 	}
 	hide() {
