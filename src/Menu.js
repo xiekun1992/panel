@@ -1,6 +1,6 @@
 export default class Menu {
 	constructor(panel, option = []) {
-		//type 可应用的元素, 0：全局, 1：图形, 2：画布
+		//type 可应用的元素, 0：全局, 1：图形, 2：画布, 3：连线
 		//0：始终可用，1、2：activeShape为空时自动禁用
 		this.options = [
 			{text: '连线', cb: this.drawLine, type: 1},
@@ -8,6 +8,7 @@ export default class Menu {
 			// {text: '粘贴', cb: this.pasteShape, type: 2},
 			// {text: '剪切', cb: this.cuteShape, type: 1}, 
 			{text: '删除', cb: this.deleteShape, type: 1},
+			{text: '删除', cb: this.deleteLine, type: 3},
 			{text: '保存为图片', cb: this.saveAsImage, type: 0},
 			...option
 		];
@@ -48,14 +49,18 @@ export default class Menu {
 	show({startX, startY}) {
 		this.element.style.top=startY-window.scrollY+2+'px';
 		this.element.style.left=startX-window.scrollX+2+'px';
+
 		let onShape = this.panel.activedShape?true:false,
-				hasShape = this.panel.hasShape();
+			onLine = this.panel.activedLine?true:false,
+			hasShape = this.panel.hasShape();
 
 		for(let e of this.element.children[0].children){
 			if(onShape){
-				this.disable(e, 2);
-			}else{
+				this.disable(e, 2, 3);
+			}else if(onLine){
 				this.disable(e, 1, 2);
+			}else{
+				this.disable(e, 1, 2, 3);
 			}
 			// if(!hasShape){
 			// 	this.toggleGlobalOperation(e);
@@ -68,8 +73,13 @@ export default class Menu {
 	}
 	actionWrapper(actionType, action) {
 		if(this.panel.activedShape){
-			if(actionType !== 2){// 只执行除画布操作外的动作
+			if(actionType == 1 || actionType == 0){// 执行全局和图形操作的动作
 				action.call(this, this.panel, this.panel.activedShape);
+				this.hide();
+			}
+		}else if(this.panel.activedLine){
+			if(actionType == 3){// 执行连线操作的动作
+				action.call(this, this.panel, this.panel.activedLine);
 				this.hide();
 			}
 		}else{
@@ -87,9 +97,12 @@ export default class Menu {
 		// panel.repaint();
 		activedShape.drawDots();
 	}
+	deleteLine(panel, activedLine) {
+		activedLine && panel.deleteLine(activedLine, true);
+
+	}
 	deleteShape(panel, activedShape) {
-		panel.deleteShape(activedShape);
-		this.hide();
+		activedShape && panel.deleteShape(activedShape);
 	}
 	copyShape(panel, activedShape) {
 		alert('copyShape');

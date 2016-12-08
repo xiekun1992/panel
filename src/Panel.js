@@ -14,10 +14,10 @@ export default class Panel {
 		}
 
 		this.frontCanvas = document.createElement('canvas');
-	  this.bgCanvas = document.createElement('canvas');
-	  this.menu = new Menu(this, menuOption);
-	  this.width = width;
-	  this.height = height;
+	  	this.bgCanvas = document.createElement('canvas');
+		this.menu = new Menu(this, menuOption);
+		this.width = width;
+		this.height = height;
 
 		this.bgCanvas.width = this.frontCanvas.width = this.width;
 		this.bgCanvas.height = this.frontCanvas.height = this.height;
@@ -30,6 +30,7 @@ export default class Panel {
 		// 连线选中的图形上的点
 		this.dotInfo = null;
 		this.activedShape = null;
+		this.activedLine = null;
 		// 是否处于连线状态
 		this.drawLine = false;
 		// 是否处于局部/整体拖动状态
@@ -60,11 +61,15 @@ export default class Panel {
 		let pointInCanvasLeft = mouseX-this.offset.left,
 			pointInCanvasTop = mouseY-this.offset.top;
 		// 筛选出鼠标所在连线起点与终点确定的矩形区域并根据公式计算出点是否在线条附近
-		for(var p of this.paths){
-			// 起点在终点左边或右边的与上边或下边情况
-			// if(pointInCanvasLeft>p.path.lines[0].x && pointInCanvasLeft<p.path.lines[p.path.lines.length-1].x 
-			   // && pointInCanvasTop)
+		for(let p of this.paths){
+			if(p.path.isPointAroundPath(pointInCanvasLeft, pointInCanvasTop)){
+				this.activedLine = p;
+				callback && callback(p);
+				return ;	
+			}
 		}
+		this.activedLine = null;
+		callback && callback(null);
 		// console.log(this.paths);
 	}
 	findActiveShape(mouseX, mouseY, callback) {
@@ -86,6 +91,8 @@ export default class Panel {
 				// 将鼠标位置转为相对画布的位置并判断落点
 				if(this.shapes[i].isPointInPath(mouseX-this.offset.left, mouseY-this.offset.top)){
 					this.activedShape = this.shapes[i];
+					this.activedLine && this.activedLine.path.setColor();
+					this.activedLine = null;
 					callback && callback(this.activedShape);
 					break;
 				}
@@ -110,7 +117,7 @@ export default class Panel {
 			this.menu.show({startX: startX, startY: startY});
 			e.stopPropagation();
 		};
-		let onmousemove, relation = {};
+		let onmousemove, line = {};
 		this.frontCanvas.addEventListener('mousedown', (e)=>{
 			// 避免鼠标超出边界后回来，事件没有注销
 			onmousemove && this.frontCanvas.removeEventListener('mousemove', onmousemove);
@@ -127,9 +134,9 @@ export default class Panel {
 						};
 					}else{
 						onmousemove = (e)=>{
-							if(this.drawLine && relation.path){
+							if(this.drawLine && line.path){
 								// 连线的末端点移动
-								relation.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+								line.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
 							}else{
 								this.activedShape && this.activedShape.setPosition(e.pageX-startX, e.pageY-startY);
 							}
@@ -140,12 +147,17 @@ export default class Panel {
 									// 在连线的过程中碰到了图形，则显示连接点
 									if(activedShape){
 										activedShape.drawDots();
-										relation.endShapeId = activedShape.id;
+										line.endShapeId = activedShape.id;
 									}
 									if(activedDot){
 										// 检查连接点是否在该图形内
 										// 确定该点的位置(小于0为未找到 or 大于0为找到)，创建连线
-										relation.endDot = activedShape.findDot(activedDot);
+										if(activedShape.id != line.startShapeId){
+											line.endDot = activedShape.findDot(activedDot)
+										}else{
+											line.endDot = -1;
+										}
+
 									}
 								});
 							}else{
@@ -162,14 +174,18 @@ export default class Panel {
 						activedDot.setBackgroundColor('#ff0000');
 						activedDot.draw({x: activedDot.position.x+activedDot.width/2, y: activedDot.position.y+activedDot.height/2});
 
-						relation = this.addPath({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
+						line = this.addLine({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
 					}
-
 					this.frontCanvas.addEventListener('mousemove', onmousemove);
 
 				});
-				this.findActiveLine(startX, startY, (activeLine)=>{
-					// console.log(activeLine)
+			}
+			if(!this.drawLine){
+				this.findActiveLine(startX, startY, (activedLine)=>{
+					for(let p of this.paths){
+						p.path.setColor();
+					}
+					activedLine && activedLine.path.setColor('#ff0000');
 				});
 			}
 		});
@@ -187,10 +203,10 @@ export default class Panel {
 				this.move = false;
 			}
 			this.pathStart = {};
-			if(relation.path && relation.endDot < 0){
-				this.deletePath(relation);
+			if(line.path && (line.endDot < 0 || line.endShapeId == line.startShapeId)){
+				this.deleteLine(line);
 			}
-			relation = {};
+			line = {};
 			this.frontCanvas.style.cursor='default';
 			let startX = e.pageX, startY = e.pageY;
 			this.findActiveShape(startX, startY, (activedShape)=>{
@@ -251,17 +267,11 @@ export default class Panel {
 	}
 	// x,y为鼠标移动值
 	repaint(x = 0,y = 0) {
-		console.log(x,y)
 		this.frontCtx.clearRect(0, 0, this.width, this.height);
-		// 绘制图形
-		for(let s of this.shapes){
-			if(this.move){
-				s.setPosition(x, y);
-			}
-			s.draw();
-		}
+		
 		// 绘制路径
-		for(var r of this.paths){
+		for(let r of this.paths){
+			// 有确定的起止点，已完成的连线
 			if(r.startShapeId && r.endShapeId){
 				let sdot,edot;
 				for(let s of this.shapes){
@@ -272,7 +282,7 @@ export default class Panel {
 						edot = s.findDotByIndex(r.endDot);
 					}
 				}
-				if(sdot && edot){
+				if(sdot && edot && sdot != edot){
 					let pathStart = {x: sdot.position.x, y: sdot.position.y},
 						pathEnd = {x: edot.position.x, y: edot.position.y};
 					if(this.move){
@@ -284,10 +294,16 @@ export default class Panel {
 					}
 					r.path.begin(pathStart);
 					r.path.close(pathEnd);
-					r.path.draw();
 				}
 			}
-			
+				r.path.draw();
+		}
+		// 绘制图形
+		for(let s of this.shapes){
+			if(this.move){
+				s.setPosition(x, y);
+			}
+			s.draw();
 		}
 	}
 	deleteShape(shape) {
@@ -298,7 +314,7 @@ export default class Panel {
 				// splice会改变数组长度，从后往前删除不会受长度变化影响
 				for(let j=this.paths.length-1;j>-1;j--){
 					if(this.paths[j] && (this.paths[j].startShapeId===shape.id || this.paths[j].endShapeId===shape.id)){
-						this.deletePath(this.paths[j]);
+						this.deleteLine(this.paths[j]);
 					}
 				}
 				this.repaint();
@@ -313,9 +329,9 @@ export default class Panel {
 		this.shapes.push(shape);
 		return shape;
 	}
-	addPath(...params) {		
+	addLine(...params) {		
 		// 记录连线的关系，所连图形的
-		let relation = new Line({
+		let line = new Line({
 			id: incrementalId++,
 			canvasContext: this.frontCtx,
 			startShapeId: this.pathStart.shape.id,
@@ -324,11 +340,12 @@ export default class Panel {
 			startDot: this.dotInfo.direction,
 			endDot: -1 // 默认无连接点
 		});
-		this.paths.push(relation);
-		return relation;
+		this.paths.push(line);
+		return line;
 	}
-	deletePath(relation) {
-		this.paths.splice(this.paths.indexOf(relation), 1);
+	deleteLine(line, needRepaint = false) {
+		this.paths.splice(this.paths.indexOf(line), 1);
+		needRepaint && this.repaint();
 	}
 	hasShape() {
 		return this.shapes.length > 0?true:false;
@@ -389,11 +406,11 @@ export default class Panel {
 
 		tmpCtx.fillStyle = '#ffffff';
 		tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
-		for(var s of this.shapes){
-			s.draw(tmpCtx);
-		}
 		for(let p of this.paths){
 			p.path.draw(tmpCtx);
+		}
+		for(var s of this.shapes){
+			s.draw(tmpCtx);
 		}
 
 		let image = new Image();

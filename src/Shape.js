@@ -191,7 +191,12 @@ class Path {
 	constructor(canvasContext, ...lines) {
 		this.lines = lines;
 		this.ctx = canvasContext;
+		this.defaultColor = '#555555';
+		this.color = this.defaultColor;
 		// this.id=incrementalId++;
+	}
+	setColor(color = this.defaultColor) {
+		this.color = color;
 	}
 	begin({x, y}) {
 		this.lines[0] = {x:x+4, y:y+4};
@@ -206,26 +211,28 @@ class Path {
 	add({x, y}) {
 		this.lines.push({x:x+4, y:y+4});
 	}
-	drawLine() {
-		this.ctx.strokeStyle = '#000000';
-		this.ctx.lineWidth = 1;
-		this.ctx.beginPath();
-		this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
-		for(var l of this.lines.slice(1)){
-			this.ctx.lineTo(l.x, l.y);
-		}
-		this.ctx.stroke();
-		this.ctx.closePath();
-	}
+	// drawLine() {
+	// 	this.ctx.strokeStyle = '#000000';
+	// 	this.ctx.lineWidth = 1;
+	// 	this.ctx.beginPath();
+	// 	this.ctx.moveTo(this.lines[0].x, this.lines[0].y);
+	// 	for(var l of this.lines.slice(1)){
+	// 		this.ctx.lineTo(l.x, l.y);
+	// 	}
+	// 	this.ctx.stroke();
+	// 	this.ctx.closePath();
+	// }
 	// 绘制二阶贝塞尔曲线
 	draw(ctx = this.ctx) {
-		ctx.strokeStyle = '#555555';
-		ctx.lineWidth = 2;
+		ctx.strokeStyle = this.color;
+		ctx.lineWidth = 1;
 		ctx.beginPath();
-		let startX = this.lines[0].x, startY = this.lines[0].y,
-				endX = this.lines[this.lines.length-1].x, endY = this.lines[this.lines.length-1].y;
+		let startX = this.lines[0].x, 
+			startY = this.lines[0].y,
+			endX = this.lines[this.lines.length-1].x, 
+			endY = this.lines[this.lines.length-1].y;
 		// 检测连接点相对位置情况来修改连接线的类型
-		switch(true){
+		// switch(true){
 			// 终点在右上方，三阶贝塞尔曲线，以终点为起点绘制
 			// case (startX > endX && startY < endY): 
 			// 	this.ctx.moveTo(endX, endY);
@@ -236,12 +243,31 @@ class Path {
 			// 	this.ctx.moveTo(startX, startY);
 			// 	this.ctx.bezierCurveTo(endX, startY, startX, endY, endX, endY);
 			//  	break;
-			default:
+			// default:
 				ctx.moveTo(startX, startY);
 				ctx.quadraticCurveTo(endX, startY, endX, endY);
-		}
+		// }
 		ctx.stroke();
 		ctx.closePath();
+	}
+	isPointAroundPath(pointInCanvasLeft, pointInCanvasTop) {
+		let sx = this.lines[0].x,
+			sy = this.lines[0].y,
+			ex = this.lines[this.lines.length-1].x,
+			ey = this.lines[this.lines.length-1].y;
+
+		// 根据二阶贝塞尔曲线公式确定理论上y的位置
+		for(let t=0;t<=1;t+=0.01){
+			let x = Math.pow(1-t,2)*sx+2*t*(1-t)*ex+t*t*ex;
+			if(pointInCanvasLeft-2 <=x && x <= pointInCanvasLeft+2){
+				let y = Math.pow(1-t,2)*sy+2*t*(1-t)*sy+t*t*ey;
+				if(pointInCanvasTop-2 <=y && y <= pointInCanvasTop+2){
+					// console.log(`y ${pointInCanvasTop} ${y} find`);
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	exportMetaData() {
 		return this.lines;
