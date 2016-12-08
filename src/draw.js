@@ -24,6 +24,10 @@ new Panel({
 				alterModalBg.setAttribute('id','xpanelMenuAlter');
 				document.body.appendChild(alterModalBg);
 			}
+			let dataHTML='';
+			for(let p in activeShape.data.properties){
+				dataHTML+=`<div>${p}: ${activeShape.data.properties[p]}</div>`;
+			}
 			alterModalBg.innerHTML=`
 			<div class="xpanel-menu-alter">
 				<h4>图形属性修改</h4>
@@ -38,6 +42,11 @@ new Panel({
 				</div>
 				<div>
 					<span>前景颜色</span><input type="color" value="${activeShape.color}" name="color">
+				</div>
+				<hr/>
+				<div>
+					<span style="float:left;">外部数据</span>
+					<span>${dataHTML}</span>
 				</div>
 				<div>
 					<button id="confirmAlter">确定</button>
