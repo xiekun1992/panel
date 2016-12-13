@@ -16,8 +16,20 @@ export default class Panel {
 		this.frontCanvas = document.createElement('canvas');
 	  	this.bgCanvas = document.createElement('canvas');
 		this.menu = new Menu(this, menuOption);
-		this.width = width;
-		this.height = height;
+
+		const regx = /^(\d+)\%$/;
+		let widthRes = regx.exec(width),
+			heightRes = regx.exec(height);
+		if(widthRes){
+			this.width = widthRes.pop()/100*this.container.parentNode.offsetWidth;
+		}else{
+			this.width = parseInt(width);
+		}
+		if(heightRes){
+			this.height = heightRes.pop()/100*this.container.parentNode.offsetHeight;
+		}else{
+			this.height = parseInt(height);
+		}
 
 		this.bgCanvas.width = this.frontCanvas.width = this.width;
 		this.bgCanvas.height = this.frontCanvas.height = this.height;
