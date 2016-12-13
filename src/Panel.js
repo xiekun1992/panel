@@ -9,10 +9,11 @@ export default class Panel {
 			throw new Error(`Panel constructor require an id like #panel to be initialized.`);
 		}
 		this.container = document.querySelector(container);
+		this.containerParent = this.container.parentNode;
 		if(!this.container){
 			throw new Error(`invalid parameter ${container}.`);	
 		}
-
+		this.container.innerHTML="";
 		this.frontCanvas = document.createElement('canvas');
 	  	this.bgCanvas = document.createElement('canvas');
 		this.menu = new Menu(this, menuOption);
@@ -20,13 +21,36 @@ export default class Panel {
 		const regx = /^(\d+)\%$/;
 		let widthRes = regx.exec(width),
 			heightRes = regx.exec(height);
+			// this.width=width;
+			// this.height=height;
 		if(widthRes){
-			this.width = widthRes.pop()/100*this.container.parentNode.offsetWidth;
+			this.width = widthRes.pop()/100*this.containerParent.offsetWidth;
+			window.addEventListener('resize', ()=>{
+				console.log(width)
+				let widthRes = regx.exec(width),
+					heightRes = regx.exec(height);
+				if(widthRes){
+					this.width = widthRes.pop()/100*this.containerParent.offsetWidth;
+				}else{
+					this.width = parseInt(width);
+				}
+				if(heightRes){
+					this.height = heightRes.pop()/100*this.containerParent.offsetHeight;
+				}else{
+					this.height = parseInt(height);
+				}
+
+				this.bgCanvas.width = this.frontCanvas.width = this.width;
+				this.bgCanvas.height = this.frontCanvas.height = this.height;
+				this.initBackground();
+				this.offset = this.countOffset(this.frontCanvas);
+				this.repaint();
+			});
 		}else{
 			this.width = parseInt(width);
 		}
 		if(heightRes){
-			this.height = heightRes.pop()/100*this.container.parentNode.offsetHeight;
+			this.height = heightRes.pop()/100*this.containerParent.offsetHeight;
 		}else{
 			this.height = parseInt(height);
 		}
@@ -230,6 +254,7 @@ export default class Panel {
 		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
 			e.preventDefault();
+			// console.log(e.pageX,e.pageY,this.offset)
 			this.addShape('Rectangle', {
 				x: e.pageX-this.offset.left,
 				y: e.pageY-this.offset.top,
@@ -268,14 +293,15 @@ export default class Panel {
 
 	}
 	countOffset(DOMElement) {
+		let left = 0,top = 0;
+		// console.log(DOMElement.offsetParent)
 		if(DOMElement.offsetParent){
-			var {left, top} = this.countOffset(DOMElement.offsetParent);
+			({left, top} = this.countOffset(DOMElement.offsetParent));
 		}
-		left = left || 0;
-		top = top || 0;
 		left += DOMElement.offsetLeft;
 		top += DOMElement.offsetTop;
-		return {left: left, top: top};
+		// console.log(left,top)
+		return {left, top};
 	}
 	// x,y为鼠标移动值
 	repaint(x = 0,y = 0) {

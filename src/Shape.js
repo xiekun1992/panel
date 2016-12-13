@@ -44,6 +44,7 @@ class Shape {
 export class Rectangle extends Shape {
 	// x,y表示鼠标相对画布所在位置, position.x,position.y为图形相对画布位置
 	constructor({id, x = 10, y = 10, width = 80, height = 40, data, canvasContext, color, backgroundColor, borderColor, font}) {
+		// console.log(x,y)
 		super({id, color, backgroundColor, borderColor, font});
 		this.shape='Rectangle';
 		this.width = width;
