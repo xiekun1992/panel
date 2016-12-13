@@ -21,7 +21,7 @@ gulp.task('webpack', ()=>{
 		console.log('webpack complete.');
 	});
 });
-
+// 为webpack提供了一个静态文件服务器
 gulp.task('server', ['webpack'], ()=>{
 	new webpackDevServer(webpack(webpackConfig), {
 		publicPath: '/' + webpackConfig.output.publicPath,
@@ -41,4 +41,4 @@ gulp.task('dev', ['clean','webpack'], ()=>{
 	gulp.watch('./src/**/*.js', ['clean','webpack']);
 });
 
-gulp.task('default', ['clean','webpack','server']);
+gulp.task('default', ['clean','webpack','server','dev']);

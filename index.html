@@ -118,7 +118,7 @@
 		</ul>
 	</div>
 	<script>exports={};</script>
-	<script src="./dist/bundle.js"></script>
+	<script src="./dist/xpanel.js"></script>
 	<script>
 		let lis = Array.from(document.querySelectorAll("#entities>li"));
 		lis.forEach((o, i)=>{
@@ -129,6 +129,12 @@
 					'节点属性3': 'three',
 				}}));
 			});
+		});
+		new Panel({
+			container: '#panel',
+			width: 800,
+			height: 600,
+			menuOption: []
 		});
 	</script>
 </body>

@@ -350,7 +350,7 @@ export default class Panel {
 	hasShape() {
 		return this.shapes.length > 0?true:false;
 	}
-	exportCanavsData() {
+	exportCanvasData() {
 		let metaData = {
 			shapes:[],
 			lines:[]

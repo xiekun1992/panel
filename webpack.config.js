@@ -6,7 +6,7 @@ module.exports = {
 	output: {
 		path: path.join(__dirname, 'dist'),
 		publicPath: './dist/',
-		filename: 'bundle.js'
+		filename: 'xpanel.js'
 	},
 	module: {
 		loaders :[
