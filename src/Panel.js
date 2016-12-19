@@ -419,7 +419,7 @@ export default class Panel {
 			}
 			return metaData;
 		} else {
-			return '';
+			return null;
 		}
 	}
 	importCanvasData(metaData) {
