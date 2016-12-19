@@ -1,5 +1,7 @@
 import {Rectangle, Line} from './Shape';
 import Menu from './Menu';
+import Event from './Event';
+
 // 产生每个图形的id
 let incrementalId=1;
 
@@ -91,6 +93,8 @@ export default class Panel {
 		this.initBackground();
 		this.shapeRule['Rectangle'] = Rectangle;
 		this.shapeRule['Line'] = Line;
+
+		this.event = new Event();
 	}
 	// 查找激活的连线
 	findActiveLine(mouseX, mouseY, callback) {
@@ -167,6 +171,8 @@ export default class Panel {
 						onmousemove= (e)=>{
 							this.move=true;
 							this.repaint(e.pageX-startX, e.pageY-startY);	
+
+							this.event.emit('mousemove', e);
 						};
 					}else{
 						onmousemove = (e)=>{
@@ -203,6 +209,8 @@ export default class Panel {
 									activedShape.drawDots();
 								}
 							}
+
+							this.event.emit('mousemove', e);
 						};
 					}
 					if(this.drawLine && activedDot){
@@ -224,6 +232,8 @@ export default class Panel {
 					activedLine && activedLine.path.setColor('#ff0000');
 				});
 			}
+
+			this.event.emit('mousedown', e);
 		});
 		this.frontCanvas.addEventListener('mouseup', (e)=>{
 			this.frontCanvas.removeEventListener('mousemove', onmousemove);
@@ -251,6 +261,8 @@ export default class Panel {
 				}
 				this.repaint();
 			});
+
+			this.event.emit('mouseup', e);
 		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
 			e.preventDefault();
@@ -389,21 +401,26 @@ export default class Panel {
 		return this.shapes.length > 0?true:false;
 	}
 	exportCanvasData() {
-		let metaData = {
-			shapes:[],
-			lines:[]
-		};
-		// 导出图形
-		for(let s of this.shapes){
-			// 重置边框颜色
-			s.setBorderColor();
-			metaData.shapes.push(s.exportMetaData());
+		// 如果存在图形则导出数据，不存在则返回null
+		if(this.hasShape()) {
+			let metaData = {
+				shapes:[],
+				lines:[]
+			};
+			// 导出图形
+			for(let s of this.shapes){
+				// 重置边框颜色
+				s.setBorderColor();
+				metaData.shapes.push(s.exportMetaData());
+			}
+			// 导出连线
+			for(let p of this.paths){
+				metaData.lines.push(p.exportMetaData());
+			}
+			return metaData;
+		} else {
+			return '';
 		}
-		// 导出连线
-		for(let p of this.paths){
-			metaData.lines.push(p.exportMetaData());
-		}
-		return metaData;
 	}
 	importCanvasData(metaData) {
 		this.reset();

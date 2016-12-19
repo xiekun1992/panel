@@ -9,14 +9,6 @@ export default class Menu {
 			// {text: '剪切', cb: this.cuteShape, type: 1}, 
 			{text: '删除', cb: this.deleteShape, type: 1},
 			{text: '删除', cb: this.deleteLine, type: 3},
-			{text: '保存为图片', cb: this.saveAsImage, type: 0},
-			{text: '导出元数据', cb: (panel)=>{
-				localStorage.setItem("xpanel",JSON.stringify(panel.exportCanvasData()));
-			}, type: 0},
-			{text: '导入元数据', cb: (panel)=>{
-				let data = JSON.parse(localStorage.getItem("xpanel"));
-				data && panel.importCanvasData(data);
-			}, type: 0},
 			{text: '修改', cb: (panel, activeShape)=>{
 				// 图形修改框
 				let alterModalBg = document.querySelector("#xpanelMenuAlter");
@@ -81,6 +73,15 @@ export default class Menu {
 				}
 				// console.log(activeShape)
 			}, type: 1},
+			{text: '保存为图片', cb: this.saveAsImage, type: 0},
+			// {text: '导出到草稿', cb: (panel)=>{
+			// 	localStorage.setItem("xpanel",JSON.stringify(panel.exportCanvasData()));
+			// }, type: 0},
+			// {text: '从草稿导入', cb: (panel)=>{
+			// 	let data = JSON.parse(localStorage.getItem("xpanel"));
+			// 	data && panel.importCanvasData(data);
+			// }, type: 0},
+			{text: '全部清空', cb: panel=>{panel.reset();}, type: 0},
 			...option
 		];
 
