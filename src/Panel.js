@@ -216,7 +216,7 @@ export default class Panel {
 
 				});
 			}
-			if(!this.drawLine){
+			if(!this.drawLine && !this.activedShape){
 				this.findActiveLine(startX, startY, (activedLine)=>{
 					for(let p of this.paths){
 						p.path.setColor();
@@ -395,6 +395,8 @@ export default class Panel {
 		};
 		// 导出图形
 		for(let s of this.shapes){
+			// 重置边框颜色
+			s.setBorderColor();
 			metaData.shapes.push(s.exportMetaData());
 		}
 		// 导出连线
