@@ -98,6 +98,7 @@ export default class Panel {
 	}
 	// 查找激活的连线
 	findActiveLine(mouseX, mouseY, callback) {
+
 		let pointInCanvasLeft = mouseX-this.offset.left,
 			pointInCanvasTop = mouseY-this.offset.top;
 		// 筛选出鼠标所在连线起点与终点确定的矩形区域并根据公式计算出点是否在线条附近
@@ -113,6 +114,7 @@ export default class Panel {
 		// console.log(this.paths);
 	}
 	findActiveShape(mouseX, mouseY, callback) {
+
 		let lastActivedShape = this.activedShape;
 		this.dotInfo = null;
 		// 检查上次选中的图形中是否选择连线结点
@@ -159,6 +161,7 @@ export default class Panel {
 		};
 		let onmousemove, line = {};
 		this.frontCanvas.addEventListener('mousedown', (e)=>{
+			this.offset = this.countOffset(this.frontCanvas);
 			// 避免鼠标超出边界后回来，事件没有注销
 			onmousemove && this.frontCanvas.removeEventListener('mousemove', onmousemove);
 			let startX = e.pageX, startY = e.pageY;
@@ -176,6 +179,7 @@ export default class Panel {
 						};
 					}else{
 						onmousemove = (e)=>{
+
 							if(this.drawLine && line.path){
 								// 连线的末端点移动
 								line.path.close({x: e.pageX- this.offset.left, y: e.pageY-this.offset.top});
@@ -266,6 +270,8 @@ export default class Panel {
 		});
 		this.frontCanvas.addEventListener('drop', (e)=>{
 			e.preventDefault();
+			this.offset = this.countOffset(this.frontCanvas);
+
 			// console.log(e.pageX,e.pageY,this.offset)
 			this.addShape('Rectangle', {
 				x: e.pageX-this.offset.left,
