@@ -283,9 +283,10 @@ export default class Panel {
 		const GRID_INTERVAL = 10, 
 					GRIDROWS = this.bgCanvas.height / GRID_INTERVAL, 
 					GRIDCOLS = this.bgCanvas.width / GRID_INTERVAL;
-
+		this.bgCtx.save();
+		this.bgCtx.translate(0.5, 0.5);
 		this.bgCtx.lineWidth=0.2;
-		this.bgCtx.strokeStyle='#555555';
+		this.bgCtx.strokeStyle='#dddddd';
 		this.bgCtx.moveTo(0, 0);
 		for(var i=1;i<GRIDROWS;i++){
 			this.bgCtx.beginPath();
@@ -302,6 +303,7 @@ export default class Panel {
 			this.bgCtx.stroke();
 			this.bgCtx.closePath();
 		}
+		this.bgCtx.restore();
 
 	}
 	countOffset(DOMElement) {
