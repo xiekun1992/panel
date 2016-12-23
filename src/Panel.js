@@ -6,7 +6,7 @@ import Event from './Event';
 let incrementalId=1;
 
 export default class Panel {
-	constructor({container, width = 400, height = 400, menuOption}) {
+	constructor({container, width = 400, height = 400, menuOption, shapeOption}) {
 		if(typeof container !== 'string' && container.charAt(0) !== '#'){
 			throw new Error(`Panel constructor require an id like #panel to be initialized.`);
 		}
@@ -272,16 +272,28 @@ export default class Panel {
 			e.preventDefault();
 			this.offset = this.countOffset(this.frontCanvas);
 
+			let dataString = e.dataTransfer.getData('data');
+			try{
+				let data = JSON.parse(dataString);
+				if(typeof data.text == 'undefined'){
+					console.error(`invalid data widthout text property`);
+					return ;
+				}
+				this.addShape('Rectangle', {
+					x: e.pageX-this.offset.left,
+					y: e.pageY-this.offset.top,
+					data,
+					canvasContext: this.frontCtx
+				});
+				this.event.emit('drop', e);
+			}catch(e){
+				console.error(`invalid data width '${dataString}'`);
+			}
 			// console.log(e.pageX,e.pageY,this.offset)
-			this.addShape('Rectangle', {
-				x: e.pageX-this.offset.left,
-				y: e.pageY-this.offset.top,
-				data: JSON.parse(e.dataTransfer.getData('data')),
-				canvasContext: this.frontCtx
-			});
 		});
 		this.frontCanvas.addEventListener('dragover', (e)=>{
 			e.preventDefault();
+			this.event.emit('dragover', e);
 		});
 	}
 	initBackground() {

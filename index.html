@@ -115,16 +115,17 @@
 <body>
 	<div class="container">
 		<div id="panel"></div>
+		company
 		<ul id="entities">
-			<li draggable="true">公司1</li>
-			<li draggable="true">公司2</li>
-			<li draggable="true">公司3</li>
+			<li><a href="javascript:void(0)" draggable="true">公司1</a></li>
+			<li><a href="javascript:void(0)" draggable="true">公司2</a></li>
+			<li><a href="javascript:void(0)" draggable="true">公司3</a></li>
 		</ul>
 	</div>
 	<script>exports={};</script>
 	<script src="./dist/xpanel.min.js"></script>
 	<script>
-		let lis = Array.from(document.querySelectorAll("#entities>li"));
+		let lis = Array.from(document.querySelectorAll("#entities>li>a"));
 		lis.forEach((o, i)=>{
 			o.addEventListener('dragstart', (e)=>{
 				e.dataTransfer.setData('data',JSON.stringify({text:e.target.innerHTML, properties: {
