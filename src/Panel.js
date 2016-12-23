@@ -6,7 +6,7 @@ import Event from './Event';
 let incrementalId=1;
 
 export default class Panel {
-	constructor({container, width = 400, height = 400, menuOption, shapeOption}) {
+	constructor({container, width = 400, height = 400, menuOption = [], shapeOption = {}}) {
 		if(typeof container !== 'string' && container.charAt(0) !== '#'){
 			throw new Error(`Panel constructor require an id like #panel to be initialized.`);
 		}
@@ -19,6 +19,7 @@ export default class Panel {
 		this.frontCanvas = document.createElement('canvas');
 	  	this.bgCanvas = document.createElement('canvas');
 		this.menu = new Menu(this, menuOption);
+		this.shapeOption = shapeOption;
 
 		const regx = /^(\d+)\%$/;
 		let widthRes = regx.exec(width),
@@ -283,7 +284,10 @@ export default class Panel {
 					x: e.pageX-this.offset.left,
 					y: e.pageY-this.offset.top,
 					data,
-					canvasContext: this.frontCtx
+					canvasContext: this.frontCtx,
+					color: this.shapeOption.color, 
+					backgroundColor: this.shapeOption.backgroundColor, 
+					font: this.shapeOption.font
 				});
 				this.event.emit('drop', e);
 			}catch(e){
