@@ -273,7 +273,7 @@ export default class Panel {
 			e.preventDefault();
 			this.offset = this.countOffset(this.frontCanvas);
 
-			let dataString = e.dataTransfer.getData('data');
+			let dataString = e.dataTransfer.getData('text');
 			try{
 				let data = JSON.parse(dataString);
 				if(typeof data.text == 'undefined'){

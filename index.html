@@ -123,18 +123,21 @@
 		</ul>
 	</div>
 	<script>exports={};</script>
+	<script src="./src/classList_polyfill.js"></script>
 	<script src="./dist/xpanel.min.js"></script>
 	<script>
-		let lis = Array.from(document.querySelectorAll("#entities>li>a"));
-		lis.forEach((o, i)=>{
-			o.addEventListener('dragstart', (e)=>{
-				e.dataTransfer.setData('data',JSON.stringify({text:e.target.innerHTML, properties: {
+		var lis = document.querySelectorAll("#entities>li>a");
+		for(var i=0;i<lis.length;i++){
+			var o=lis[i];
+			o.addEventListener('dragstart', function(event){
+				var e=event||window.event;
+				e.dataTransfer.setData('text',JSON.stringify({text:e.target.text||e.target.innerHTML, properties: {
 					'节点属性1': 'one',
 					'节点属性2': 'two',
 					'节点属性3': 'three',
 				}}));
 			});
-		});
+		}
 		var panel = new Panel({
 			container: '#panel',
 			width: '100%',

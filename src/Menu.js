@@ -58,7 +58,7 @@ export default class Menu {
 				`;
 
 				document.querySelector("#confirmAlter").onclick=function (){
-					var inputs = document.querySelectorAll("#xpanelMenuAlter input");
+					var inputs = Array.from(document.querySelectorAll("#xpanelMenuAlter input"));
 					for(var i of inputs){
 						let name = i.getAttribute('name');
 						let path = name.split('.'), propertyPath='activeShape';
@@ -74,13 +74,13 @@ export default class Menu {
 				// console.log(activeShape)
 			}, type: 1},
 			{text: '保存为图片', cb: this.saveAsImage, type: 0},
-			// {text: '导出到草稿', cb: (panel)=>{
-			// 	localStorage.setItem("xpanel",JSON.stringify(panel.exportCanvasData()));
-			// }, type: 0},
-			// {text: '从草稿导入', cb: (panel)=>{
-			// 	let data = JSON.parse(localStorage.getItem("xpanel"));
-			// 	data && panel.importCanvasData(data);
-			// }, type: 0},
+			{text: '导出到草稿', cb: (panel)=>{
+				localStorage.setItem("xpanel",JSON.stringify(panel.exportCanvasData()));
+			}, type: 0},
+			{text: '从草稿导入', cb: (panel)=>{
+				let data = JSON.parse(localStorage.getItem("xpanel"));
+				data && panel.importCanvasData(data);
+			}, type: 0},
 			{text: '全部清空', cb: panel=>{panel.reset();}, type: 0},
 			...option
 		];
@@ -125,7 +125,7 @@ export default class Menu {
 			onLine = this.panel.activedLine?true:false,
 			hasShape = this.panel.hasShape();
 
-		for(let e of this.element.children[0].children){
+		for(let e of Array.from(this.element.children[0].children)){
 			if(onShape){
 				this.disable(e, 2, 3);
 			}else if(onLine){
@@ -137,11 +137,12 @@ export default class Menu {
 			// 	this.toggleGlobalOperation(e);
 			// }
 		}
-		let offsetLeft=startX-window.scrollX+2,
-			offsetTop=startY-window.scrollY+2,
+		let offsetLeft=startX-document.body.scrollLeft+2,
+			offsetTop=startY-document.body.scrollTop+2,
 			tmpHeight=this.element.clientHeight,
 			tmpWidth=this.element.clientWidth;
 
+			console.log(offsetTop,offsetLeft,typeof offsetTop)
 		// 判断当前位置是否接触到边界
 		if(tmpWidth+offsetLeft>=document.body.clientWidth){
 			offsetLeft-=(tmpWidth + 4);
@@ -149,7 +150,6 @@ export default class Menu {
 		if(tmpHeight+offsetTop>=document.body.clientHeight){
 			offsetTop-=(tmpHeight + 4);
 		}
-
 		this.element.style.top=offsetTop+'px';
 		this.element.style.left=offsetLeft+'px';
 		this.element.classList.add('show');
