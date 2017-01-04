@@ -1,4 +1,4 @@
-
+// 事件发布订阅器
 export default class Event {
 	constructor() {
 		this.events={};
@@ -21,5 +21,8 @@ export default class Event {
 				// 不立即退出，防止出现重复注册的回调
 			}
 		}
+	}
+	destroy() {
+		this.events={};
 	}
 }

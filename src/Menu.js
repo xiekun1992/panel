@@ -157,6 +157,12 @@ export default class Menu {
 	hide() {
 		this.element.classList.remove('show');
 	}
+	destroy() {
+		// 释放节点和引用，防止内存泄露
+		this.element.parentNode.removeChild(this.element);
+		this.element=null;
+		this.panel=null;
+	}
 	actionWrapper(actionType, action) {
 		if(this.panel.activedShape){
 			if(actionType == 1 || actionType == 0){// 执行全局和图形操作的动作

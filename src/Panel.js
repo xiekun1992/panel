@@ -26,29 +26,30 @@ export default class Panel {
 			heightRes = regx.exec(height);
 			// this.width=width;
 			// this.height=height;
+		this.resizeFn=()=>{
+			console.log(width)
+			let widthRes = regx.exec(width),
+				heightRes = regx.exec(height);
+			if(widthRes){
+				this.width = widthRes.pop()/100*this.containerParent.offsetWidth;
+			}else{
+				this.width = parseInt(width);
+			}
+			if(heightRes){
+				this.height = heightRes.pop()/100*this.containerParent.offsetHeight;
+			}else{
+				this.height = parseInt(height);
+			}
+
+			this.bgCanvas.width = this.frontCanvas.width = this.width;
+			this.bgCanvas.height = this.frontCanvas.height = this.height;
+			this.initBackground();
+			this.offset = this.countOffset(this.frontCanvas);
+			this.repaint();
+		}
 		if(widthRes){
 			this.width = widthRes.pop()/100*this.containerParent.offsetWidth;
-			window.addEventListener('resize', ()=>{
-				console.log(width)
-				let widthRes = regx.exec(width),
-					heightRes = regx.exec(height);
-				if(widthRes){
-					this.width = widthRes.pop()/100*this.containerParent.offsetWidth;
-				}else{
-					this.width = parseInt(width);
-				}
-				if(heightRes){
-					this.height = heightRes.pop()/100*this.containerParent.offsetHeight;
-				}else{
-					this.height = parseInt(height);
-				}
-
-				this.bgCanvas.width = this.frontCanvas.width = this.width;
-				this.bgCanvas.height = this.frontCanvas.height = this.height;
-				this.initBackground();
-				this.offset = this.countOffset(this.frontCanvas);
-				this.repaint();
-			});
+			window.addEventListener('resize', this.resizeFn);
 		}else{
 			this.width = parseInt(width);
 		}
@@ -240,6 +241,10 @@ export default class Panel {
 
 			this.event.emit('mousedown', e);
 		});
+		this.frontCanvas.addEventListener('dblclick', (e)=>{
+
+			this.event.emit('dblclick', e);
+		});
 		this.frontCanvas.addEventListener('mouseup', (e)=>{
 			this.frontCanvas.removeEventListener('mousemove', onmousemove);
 			this.activedShape && this.activedShape.drop();
@@ -299,6 +304,23 @@ export default class Panel {
 			e.preventDefault();
 			this.event.emit('dragover', e);
 		});
+	}
+	destroy() {
+		this.container.removeChild(this.bgCanvas);
+		this.container.removeChild(this.frontCanvas);
+		this.frontCanvas=null;
+		this.bgCanvas=null;
+		this.containerParent=null;
+		this.container=null;
+		this.frontCtx=null;
+		this.bgCtx=null;
+		this.shapes=[];
+		this.paths=[];
+		this.menu.destroy();
+		this.menu=null;
+		this.event.destroy();
+		this.event=null;
+		window.removeEventListener('resize', this.resizeFn);
 	}
 	initBackground() {
 		// 绘制背景网格线
