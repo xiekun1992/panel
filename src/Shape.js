@@ -39,6 +39,29 @@ class Shape {
 			shape: this.shape
 		}
 	}
+	// 折叠长文本，换行显示
+	// longText 包含富文本
+	foldLongText(longText, maxWidth, ctx) {
+		// 处理富文本，转为普通文本
+		longText = longText.replace(/^<div>/,'').replace(/<\/div>|<br>/g,'').replace(/&nbsp;/g,' ').split(/<div>/);
+		// 处理普通文本
+		let lines=[];
+		longText.forEach(function(text, j){
+			let starti=0, line='';
+			for(let i=0; i<text.length; i++){
+				line += text.charAt(i);
+				if(ctx.measureText(line).width > maxWidth){
+					console.log(ctx.measureText(line).width, maxWidth);
+					lines.push(line.slice(0, i-starti-1));
+					starti = i-starti-1;
+					line = line.slice(starti);
+				}
+			}
+			// 保存最后一行
+			lines.push(line);
+		});
+		return lines;
+	}
 }
 
 export class Rectangle extends Shape {
@@ -47,6 +70,9 @@ export class Rectangle extends Shape {
 		// console.log(x,y)
 		super({id, color, backgroundColor, borderColor, font});
 		this.shape='Rectangle';
+		// 设置默认宽高
+		this.initial={height, width};
+
 		this.width = width;
 		this.height = height;
 		this.position = {x: x-width/2, y: y-height/2, originX: x-width/2, originY: y-height/2};
@@ -55,6 +81,17 @@ export class Rectangle extends Shape {
 		// this.ctx = canvasContext;
 		this.setContext(canvasContext);
 		this.draw();
+	}
+	resetDimension(){
+		this.width = this.initial.width;
+		this.height = this.initial.height;
+	}
+	setDimension({width = this.width, height = this.height} = this.initial) {
+		this.width = width;
+		this.height = height;
+	}
+	setText(text = this.text) {
+		this.text=text;
 	}
 	setContext(ctx) {
 		this.ctx = ctx;
@@ -85,7 +122,7 @@ export class Rectangle extends Shape {
 		ctx.beginPath();
 		ctx.fillStyle = this.backgroundColor;
 		ctx.textAlign='center';
-		ctx.textBaseline='middle';
+		ctx.textBaseline='top';
 		// ctx.shadowBlur=2;
 		// ctx.shadowColor=this.borderColor || '#bbb';
 		ctx.lineWidth=1;
@@ -99,7 +136,16 @@ export class Rectangle extends Shape {
 		ctx.shadowBlur=0;
 		ctx.fillStyle=this.color;
 		ctx.font=this.getFont();
-		ctx.fillText(this.text, this.position.x+this.width/2, this.position.y+this.height/2);
+		// 处理长文本换行
+		let textArray = this.foldLongText(this.text, this.width, ctx);
+		if(textArray.length===1){
+			ctx.textBaseline='middle';
+			ctx.fillText(textArray[0], this.position.x+this.width/2, (this.position.y+this.height/2), this.width);
+		}else{
+			textArray.forEach((o, i)=>{
+				ctx.fillText(o, this.position.x+this.width/2, (this.position.y)+(this.font.size+1.2)*i, this.width);				
+			});
+		}
 		ctx.closePath();
 	}
 	drawDots() {

@@ -65,6 +65,38 @@ export default class Panel {
 		this.frontCanvas.classList.add('xpanel-front');
 		this.bgCanvas.classList.add('xpanel-background');
 
+		// 重命名输入框
+		this.renamingShape; // 处于重命名的图形
+		let renameKeyboardInputTimer;
+		this.renameInput = document.createElement('div');
+		this.renameInput.classList.add('xpanel-rename-input');
+		this.renameInput.setAttribute('contenteditable', 'true');
+		this.renameInput.onkeydown = ()=>{
+			renameKeyboardInputTimer = setInterval(()=>{
+				if(this.renamingShape){
+					this.renamingShape.setText(this.renameInput.innerHTML);
+					let elementHeight = this.renameInput.clientHeight;
+					if(elementHeight < this.renamingShape.initial.height){
+						// 小于默认高度则重置到默认值
+						this.renamingShape.resetDimension();
+						this.renamingShape.setDimension();
+					}else{
+						this.renamingShape.setDimension({height: elementHeight});
+					}
+					this.repaint();
+				}
+			}, 100);
+		};
+		this.renameInput.onkeyup = ()=>{
+			clearInterval(renameKeyboardInputTimer);
+		};
+		this.renameInput.onblur = ()=>{
+			clearInterval(renameKeyboardInputTimer);
+			this.renameInput.style.display = 'none';
+			this.renamingShape = null;
+		};
+		this.container.appendChild(this.renameInput);
+
 		this.shapes = [];
 		this.paths = [];
 		// 连线选中的图形上的点
@@ -242,6 +274,15 @@ export default class Panel {
 			this.event.emit('mousedown', e);
 		});
 		this.frontCanvas.addEventListener('dblclick', (e)=>{
+			// 先会出发两次mousedown，然后触发dblclick
+			this.renamingShape = this.activedShape;
+			let {position: {x, y}, width, height, data} = this.renamingShape.exportMetaData();
+			this.renameInput.innerHTML = data.text;
+			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; display:block;`;
+
+			// this.renameInput.range = window.getSelection().getRangeAt(0);
+			// this.renameInput.range.setStart(this.renameInput.range.startContainer, 2);
+			this.renameInput.focus();
 
 			this.event.emit('dblclick', e);
 		});
