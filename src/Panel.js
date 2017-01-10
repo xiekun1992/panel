@@ -71,11 +71,12 @@ export default class Panel {
 		this.renameInput = document.createElement('div');
 		this.renameInput.classList.add('xpanel-rename-input');
 		this.renameInput.setAttribute('contenteditable', 'true');
+		this.renameInput.setAttribute('spellcheck', 'false');
 		this.renameInput.onkeydown = ()=>{
 			renameKeyboardInputTimer = setInterval(()=>{
 				if(this.renamingShape){
-					this.renamingShape.setText(this.renameInput.innerHTML);
 					let elementHeight = this.renameInput.clientHeight;
+					this.renamingShape.setText(this.renameInput.innerHTML);
 					if(elementHeight < this.renamingShape.initial.height){
 						// 小于默认高度则重置到默认值
 						this.renamingShape.resetDimension();
@@ -279,10 +280,15 @@ export default class Panel {
 			let {position: {x, y}, width, height, data} = this.renamingShape.exportMetaData();
 			this.renameInput.innerHTML = data.text;
 			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; display:block;`;
-
-			// this.renameInput.range = window.getSelection().getRangeAt(0);
-			// this.renameInput.range.setStart(this.renameInput.range.startContainer, 2);
-			this.renameInput.focus();
+			// 设置光标位置
+			// this.renameInput.focus();
+			let selection = window.getSelection();
+			let range = selection.getRangeAt(0);
+			range.selectNode(this.renameInput);
+			range.setStart(range.startContainer.firstChild, 1);
+			range.collapse(true);
+			selection.removeAllRanges();
+			selection.addRange(range);
 
 			this.event.emit('dblclick', e);
 		});

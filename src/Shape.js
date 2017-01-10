@@ -50,13 +50,14 @@ class Shape {
 			let starti=0, line='';
 			for(let i=0; i<text.length; i++){
 				line += text.charAt(i);
-				if(ctx.measureText(line).width > maxWidth){
+				if(ctx.measureText(line).width > maxWidth+2){
 					console.log(ctx.measureText(line).width, maxWidth);
 					lines.push(line.slice(0, i-starti-1));
 					starti = i-starti-1;
 					line = line.slice(starti);
 				}
 			}
+			console.log(ctx.measureText(line).width, maxWidth);
 			// 保存最后一行
 			lines.push(line);
 		});
