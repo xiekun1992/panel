@@ -38,16 +38,16 @@ export default class Menu {
 				<div class="xpanel-menu-alter">
 					<h4>图形属性修改</h4>
 					<div>
-						<span>显示文本</span><input type="text" value="${activeShape.text}" name="text">
+						<span>显示文本</span><div class="input" contenteditable="true" name="text">${activeShape.text}</div>
 					</div>
 					<div>
-						<span>字体大小</span><input type="range" value="${activeShape.font.size}" onchange="this.nextSibling.innerHTML=this.value+'px'" name="font.size" min="14" max="20" step="1"><small style="vertical-align: super;">${activeShape.font.size}px</small>
+						<span>字体大小</span><input class="input" type="range" value="${activeShape.font.size}" onchange="this.nextSibling.innerHTML=this.value+'px'" name="font.size" min="14" max="20" step="1"><small style="vertical-align: super;">${activeShape.font.size}px</small>
 					</div>
 					<div>
-						<span>背景颜色</span><input type="color" value="${activeShape.backgroundColor}" name="backgroundColor">
+						<span>背景颜色</span><input class="input" type="color" value="${activeShape.backgroundColor}" name="backgroundColor">
 					</div>
 					<div>
-						<span>前景颜色</span><input type="color" value="${activeShape.color}" name="color">
+						<span>前景颜色</span><input class="input" type="color" value="${activeShape.color}" name="color">
 					</div>
 					${externalDisplay}
 					<div>
@@ -58,16 +58,14 @@ export default class Menu {
 				`;
 
 				document.querySelector("#confirmAlter").onclick=function (){
-					var inputs = Array.from(document.querySelectorAll("#xpanelMenuAlter input"));
-					for(var i of inputs){
-						let name = i.getAttribute('name');
-						let path = name.split('.'), propertyPath='activeShape';
-						for(var p of path){
-							propertyPath+=`['${p}']`;
-						}
-						// console.log(propertyPath)
-						eval('('+propertyPath+'=i.value)');
-					}
+					var inputs = Array.from(document.querySelectorAll("#xpanelMenuAlter .input"));
+
+					// activeShape.setText(inputs[0].innerHTML);
+					panel.renameInput.style.fontSize = `${+inputs[1].value}px`;
+					activeShape.setDimension({height: panel.renameInput.clientHeight});
+					activeShape.setFont({size: +inputs[1].value});
+					activeShape.setBackgroundColor(inputs[2].value);
+					activeShape.setColor(inputs[3].value);
 					panel.repaint();
 					document.querySelector("#xpanelMenuAlter").style.display='none';
 				}

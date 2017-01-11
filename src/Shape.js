@@ -25,6 +25,9 @@ class Shape {
 	getFont() {
 		return `${this.font.size}px ${this.font.family}`;
 	}
+	setFont({size, family} = this.font) {
+		this.font.size = size;
+	}
 	isPointInPath(x, y) {
 		// x, y 为相对画布的位置
 		// console.log(this.position.x, this.position.y, this.width, this.height)
@@ -145,7 +148,7 @@ export class Rectangle extends Shape {
 			ctx.fillText(textArray[0], this.position.x+this.width/2, (this.position.y+this.height/2), this.width);
 		}else{
 			textArray.forEach((o, i)=>{
-				ctx.fillText(o, this.position.x+this.width/2, (this.position.y)+(this.font.size+1.5)*i, this.width);				
+				ctx.fillText(o, this.position.x+this.width/2, (this.position.y)+(this.font.size*1)*i, this.width);				
 			});
 		}
 		ctx.closePath();

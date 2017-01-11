@@ -72,26 +72,34 @@ export default class Panel {
 		this.renameInput.classList.add('xpanel-rename-input');
 		this.renameInput.setAttribute('contenteditable', 'true');
 		this.renameInput.setAttribute('spellcheck', 'false');
-		this.renameInput.onkeydown = ()=>{
 
-			renameKeyboardInputTimer = setTimeout(()=>{
-				if(this.renamingShape){
-					let elementHeight = this.renameInput.clientHeight;
-					this.renamingShape.setText(this.renameInput.innerHTML);
-					if(elementHeight < this.renamingShape.initial.height){
-						// 小于默认高度则重置到默认值
-						this.renamingShape.resetDimension();
-						this.renamingShape.setDimension();
-					}else{
-						this.renamingShape.setDimension({height: elementHeight});
-					}
-					this.repaint();
+		let changeText = (text)=>{
+			if(this.renamingShape){
+				let elementHeight = this.renameInput.clientHeight;
+				this.renamingShape.setText(text);
+				if(elementHeight < this.renamingShape.initial.height){
+					// 小于默认高度则重置到默认值
+					this.renamingShape.resetDimension();
+					this.renamingShape.setDimension();
+				}else{
+					this.renamingShape.setDimension({height: elementHeight});
 				}
-			}, 50);
+				this.repaint();
+			}
 		};
+		this.renameInput.onkeydown = ()=>{
+			renameKeyboardInputTimer = setTimeout(changeText.bind(this, this.renameInput.innerHTML), 50);
+		};
+		this.renameInput.onpaste = (e)=>{
+			clearTimeout(renameKeyboardInputTimer);
+			setTimeout(()=>{
+				e.target.innerHTML = e.target.textContent;
+				this.renameInput.onkeydown();
+			}, 0);
+		}
 		this.renameInput.onblur = ()=>{
 			clearTimeout(renameKeyboardInputTimer);
-			this.renameInput.style.display = 'none';
+			this.renameInput.style.zIndex = -1;
 			this.renamingShape = null;
 		};
 		this.container.appendChild(this.renameInput);
@@ -277,7 +285,7 @@ export default class Panel {
 			this.renamingShape = this.activedShape;
 			let {position: {x, y}, width, height, data, font: {size}} = this.renamingShape.exportMetaData();
 			this.renameInput.innerHTML = data.text;
-			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; display:block; font-size:${size}px`;
+			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; z-index:999999; font-size:${size}px`;
 			// 设置光标位置
 			// this.renameInput.focus();
 			let selection = window.getSelection();

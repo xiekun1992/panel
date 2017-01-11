@@ -21,7 +21,11 @@
 			box-sizing: border-box;
 		}
 		.xpanel .xpanel-background{
-			position: absolute;top: 0;left: 0;z-index: -1;
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: -1;
+			background-color: #fff;
 		}
 		.xpanel-menu{
 			cursor:pointer;
@@ -116,14 +120,15 @@
 			top: 0;
 			background-color: #fff;
 			text-align: center;
-			display: none;
+			z-index: -1;
+			visibility: visible;
 			word-break: break-all;
 			outline: 0;
 		    box-sizing: border-box;
 		    /*font-size: 14px;*/
 		    line-height: 1.1em;
 		    font-family: 微软雅黑;
-		    padding: 4px 0;
+		    padding: 2px 0;
 		}
 	</style>
 </head>
@@ -161,7 +166,7 @@
 			menuOption: [],
 			shapeOption: {
 				font: {
-					size: 16
+					size: 15
 				}
 			}
 		});
