@@ -49,15 +49,16 @@ class Shape {
 		longText.forEach(function(text, j){
 			let starti=0, line='';
 			for(let i=0; i<text.length; i++){
+				console.log(ctx.measureText(line).width);
 				line += text.charAt(i);
-				if(ctx.measureText(line).width > maxWidth+2){
-					console.log(ctx.measureText(line).width, maxWidth);
-					lines.push(line.slice(0, i-starti-1));
-					starti = i-starti-1;
+				if(ctx.measureText(line).width > maxWidth){
+					console.info(ctx.measureText(line).width, maxWidth);
+					starti = line.length-1;
+					lines.push(line.slice(0, starti));
 					line = line.slice(starti);
 				}
 			}
-			console.log(ctx.measureText(line).width, maxWidth);
+			console.info(ctx.measureText(line).width, maxWidth);
 			// 保存最后一行
 			lines.push(line);
 		});
@@ -144,7 +145,7 @@ export class Rectangle extends Shape {
 			ctx.fillText(textArray[0], this.position.x+this.width/2, (this.position.y+this.height/2), this.width);
 		}else{
 			textArray.forEach((o, i)=>{
-				ctx.fillText(o, this.position.x+this.width/2, (this.position.y)+(this.font.size+1.2)*i, this.width);				
+				ctx.fillText(o, this.position.x+this.width/2, (this.position.y)+(this.font.size+1.5)*i, this.width);				
 			});
 		}
 		ctx.closePath();

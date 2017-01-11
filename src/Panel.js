@@ -73,7 +73,8 @@ export default class Panel {
 		this.renameInput.setAttribute('contenteditable', 'true');
 		this.renameInput.setAttribute('spellcheck', 'false');
 		this.renameInput.onkeydown = ()=>{
-			renameKeyboardInputTimer = setInterval(()=>{
+
+			renameKeyboardInputTimer = setTimeout(()=>{
 				if(this.renamingShape){
 					let elementHeight = this.renameInput.clientHeight;
 					this.renamingShape.setText(this.renameInput.innerHTML);
@@ -86,13 +87,10 @@ export default class Panel {
 					}
 					this.repaint();
 				}
-			}, 100);
-		};
-		this.renameInput.onkeyup = ()=>{
-			clearInterval(renameKeyboardInputTimer);
+			}, 50);
 		};
 		this.renameInput.onblur = ()=>{
-			clearInterval(renameKeyboardInputTimer);
+			clearTimeout(renameKeyboardInputTimer);
 			this.renameInput.style.display = 'none';
 			this.renamingShape = null;
 		};
@@ -277,9 +275,9 @@ export default class Panel {
 		this.frontCanvas.addEventListener('dblclick', (e)=>{
 			// 先会出发两次mousedown，然后触发dblclick
 			this.renamingShape = this.activedShape;
-			let {position: {x, y}, width, height, data} = this.renamingShape.exportMetaData();
+			let {position: {x, y}, width, height, data, font: {size}} = this.renamingShape.exportMetaData();
 			this.renameInput.innerHTML = data.text;
-			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; display:block;`;
+			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; display:block; font-size:${size}px`;
 			// 设置光标位置
 			// this.renameInput.focus();
 			let selection = window.getSelection();
@@ -368,6 +366,7 @@ export default class Panel {
 		this.event.destroy();
 		this.event=null;
 		window.removeEventListener('resize', this.resizeFn);
+		this.renameInput=null;
 	}
 	initBackground() {
 		// 绘制背景网格线
