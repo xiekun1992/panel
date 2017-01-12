@@ -4,6 +4,7 @@ class Shape {
 		this.backgroundColor = backgroundColor;
 		this.borderColor = borderColor;
 		this.id=id;
+		this.isShow=true;
 		this.shape='Shape';
 
 		this.font = {

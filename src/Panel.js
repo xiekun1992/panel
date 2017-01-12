@@ -84,11 +84,14 @@ export default class Panel {
 				}else{
 					this.renamingShape.setDimension({height: elementHeight});
 				}
+				// this.renamingShape.isShow = true;
 				this.repaint();
 			}
 		};
-		this.renameInput.onkeydown = ()=>{
-			renameKeyboardInputTimer = setTimeout(changeText.bind(this, this.renameInput.innerHTML), 50);
+		this.renameInput.onmouseup = this.renameInput.onkeyup = this.renameInput.onkeydown = ()=>{
+			// this.renamingShape.isShow = false;
+			// this.repaint();
+			renameKeyboardInputTimer = setTimeout(changeText.bind(this, this.renameInput.innerHTML), 0);
 		};
 		this.renameInput.onpaste = (e)=>{
 			clearTimeout(renameKeyboardInputTimer);
@@ -101,6 +104,8 @@ export default class Panel {
 			clearTimeout(renameKeyboardInputTimer);
 			this.renameInput.style.zIndex = -1;
 			this.renameInput.style.visibility = 'hidden';
+			this.renamingShape.isShow = true;
+			this.repaint();
 			this.renamingShape = null;
 		};
 		this.container.appendChild(this.renameInput);
@@ -283,6 +288,8 @@ export default class Panel {
 		});
 		this.frontCanvas.addEventListener('dblclick', (e)=>{
 			if(this.activedShape){
+				this.activedShape.isShow = false;
+				this.repaint();
 				// 先会出发两次mousedown，然后触发dblclick
 				this.renamingShape = this.activedShape;
 				let {position: {x, y}, width, height, data, font: {size}} = this.renamingShape.exportMetaData();
@@ -452,10 +459,12 @@ export default class Panel {
 		}
 		// 绘制图形
 		for(let s of this.shapes){
-			if(this.move){
-				s.setPosition(x, y);
+			if(s.isShow){
+				if(this.move){
+					s.setPosition(x, y);
+				}
+				s.draw();
 			}
-			s.draw();
 		}
 	}
 	deleteShape(shape) {
