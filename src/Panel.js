@@ -94,12 +94,13 @@ export default class Panel {
 			clearTimeout(renameKeyboardInputTimer);
 			setTimeout(()=>{
 				e.target.innerHTML = e.target.textContent;
-				this.renameInput.onkeydown();
+				changeText(this.renameInput.innerHTML);
 			}, 0);
 		}
 		this.renameInput.onblur = ()=>{
 			clearTimeout(renameKeyboardInputTimer);
 			this.renameInput.style.zIndex = -1;
+			this.renameInput.style.visibility = 'hidden';
 			this.renamingShape = null;
 		};
 		this.container.appendChild(this.renameInput);
@@ -281,21 +282,22 @@ export default class Panel {
 			this.event.emit('mousedown', e);
 		});
 		this.frontCanvas.addEventListener('dblclick', (e)=>{
-			// 先会出发两次mousedown，然后触发dblclick
-			this.renamingShape = this.activedShape;
-			let {position: {x, y}, width, height, data, font: {size}} = this.renamingShape.exportMetaData();
-			this.renameInput.innerHTML = data.text;
-			this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; z-index:999999; font-size:${size}px`;
-			// 设置光标位置
-			// this.renameInput.focus();
-			let selection = window.getSelection();
-			let range = selection.getRangeAt(0);
-			range.selectNode(this.renameInput);
-			range.setStart(range.startContainer.firstChild, 1);
-			range.collapse(true);
-			selection.removeAllRanges();
-			selection.addRange(range);
-
+			if(this.activedShape){
+				// 先会出发两次mousedown，然后触发dblclick
+				this.renamingShape = this.activedShape;
+				let {position: {x, y}, width, height, data, font: {size}} = this.renamingShape.exportMetaData();
+				this.renameInput.innerHTML = data.text;
+				this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; z-index:999999; font-size:${size}px; visibility:visible;`;
+				// 设置光标位置
+				// this.renameInput.focus();
+				let selection = window.getSelection();
+				let range = selection.getRangeAt(0);
+				range.selectNode(this.renameInput);
+				range.setStart(range.startContainer.firstChild, 1);
+				range.collapse(true);
+				selection.removeAllRanges();
+				selection.addRange(range);				
+			}
 			this.event.emit('dblclick', e);
 		});
 		this.frontCanvas.addEventListener('mouseup', (e)=>{
