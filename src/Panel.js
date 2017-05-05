@@ -98,6 +98,7 @@ export default class Panel {
 			setTimeout(()=>{
 				e.target.innerHTML = e.target.textContent;
 				changeText(this.renameInput.innerHTML);
+				this.setCursorAtEnd(this.renameInput);
 			}, 0);
 		}
 		this.renameInput.onblur = ()=>{
@@ -196,6 +197,16 @@ export default class Panel {
 				this.repaint();
 			}
 		}
+	}
+	setCursorAtEnd(DOMElement) {
+		// 设置光标
+		let selection = window.getSelection();
+		let range = selection.getRangeAt(0);
+		range.selectNode(DOMElement);
+		range.setStart(range.startContainer.firstChild, range.startContainer.firstChild.innerHTML.length);
+		range.collapse(true);
+		selection.removeAllRanges();
+		selection.addRange(range);	
 	}
 	initEvents() {
 		// 绑定画布的事件
@@ -296,14 +307,7 @@ export default class Panel {
 				this.renameInput.innerHTML = data.text;
 				this.renameInput.style.cssText = `top:${y}px; left:${x}px; width:${width}px; min-height:${this.renamingShape.initial.height}px; z-index:999999; font-size:${size}px; visibility:visible;`;
 				// 设置光标位置
-				// this.renameInput.focus();
-				let selection = window.getSelection();
-				let range = selection.getRangeAt(0);
-				range.selectNode(this.renameInput);
-				range.setStart(range.startContainer.firstChild, 1);
-				range.collapse(true);
-				selection.removeAllRanges();
-				selection.addRange(range);				
+				this.setCursorAtEnd(this.renameInput);			
 			}
 			this.event.emit('dblclick', e);
 		});
